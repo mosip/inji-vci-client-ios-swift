@@ -1,0 +1,44 @@
+name: Push trigger for swift-library
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/**
+      - hotfix/**
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
+      - develop
+      - feature/**
+      - hotfix/**
+
+jobs:
+  build-swift:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Swift
+        uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: '5.9.2'  
+
+      - name: Build project
+        run: swift build
+
+      - name: Run tests
+        run: swift test
+
+      - name: Notify on Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,author,commit,workflow,job 
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
+        if: "${{ github.event_name != 'pull_request' && failure() }}"
