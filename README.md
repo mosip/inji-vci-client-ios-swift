@@ -1,10 +1,10 @@
 
-# VCI Client
+# INJI VCI Client
 - Request credential to Credential issuer
 
 ## Installation
 - Clone the repo
-- In your swift application go to file > add package dependency > add the  https://github.com/tw-mosip/inji-vci-client-ios-swift.git in git search bar> add package
+- In your swift application go to file > add package dependency > add the  https://github.com/mosip/inji-vci-client-ios-swift.git in git search bar> add package
 - Import the library and use
 
 ## APIs
@@ -22,7 +22,7 @@ Request for credential from the issuer, and receive the credential response back
 | Name         | Type                               | Description                                                                                                  | Sample                                                                                                  |
 |--------------|------------------------------------|--------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | issuerMeta   | IssuerMeta                         | struct of the issuer details like audience, endpoint, timeout, type and format                                                                           | `IssuerMeta(credentialAudience, credentialEndpoint, downloadTimeout, credentialType, credentialFormat)` |
-| proofJwt       | Proof | The proof type ProofJwt ex jwt | `JWTProof(jwt: proofJWT)`                                           |
+| proofJwt       | Proof | The proof used for making credential request. Supported proof types : JWT. | `JWTProof(jwt: proofJWT)`                                           |
 | accessToken  | String                             | token issued by providers based on auth code                                                                 | "" | 
 
 ###### Exceptions
