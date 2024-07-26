@@ -34,3 +34,4 @@ Request for credential from the issuer, and receive the credential response back
 ## More details
 
 An example app is added under /SwiftExample folder which can be referenced for more details. extract the swift example app out of the library and then follow the installation steps 
+
