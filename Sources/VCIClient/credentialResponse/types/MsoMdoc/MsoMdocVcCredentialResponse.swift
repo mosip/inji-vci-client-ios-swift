@@ -1,13 +1,10 @@
 import Foundation
-struct MsoMdocCredential: Encodable, CredentialResponse {
-    var credential: [String: AnyCodable]
+struct MsoMdocCredentialResponse : Codable, CredentialResponse {
+    var credential: String
     
-    init(credential credentialData: [String:AnyCodable]){
-        credential = credentialData
-    }
-    
-    enum CodingKeys: String, CodingKey {
-        case credential
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        credential = try container.decode(String.self, forKey: .credential)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -15,13 +12,17 @@ struct MsoMdocCredential: Encodable, CredentialResponse {
         try container.encode(credential, forKey: .credential)
     }
     
+    enum CodingKeys: String, CodingKey {
+        case credential
+    }
+    
     func toJSONString() throws -> String {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
-        let data = try encoder.encode(self)
-        guard let jsonString = String(data: data, encoding: .utf8) else {
-            throw DownloadFailedError.encodingResponseFailed
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(self)
+            guard let jsonString = String(data: data, encoding: .utf8) else {
+                throw DownloadFailedError.encodingResponseFailed
+            }
+            return jsonString
         }
-        return jsonString
-    } 
 }
