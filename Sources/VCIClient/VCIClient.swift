@@ -24,7 +24,7 @@ public class VCIClient {
             
             let request = CredentialRequestfactory.createCredentialRequest(
                 url: url,
-                credentialFormat: CredentialFormat.ldp_vc,
+                credentialFormat: issuerMeta.credentialFormat,
                 accessToken: accessToken,
                 issuer: issuerMeta,
                 proofJwt: proof
