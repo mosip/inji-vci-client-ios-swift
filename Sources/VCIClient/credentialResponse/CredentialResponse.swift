@@ -4,7 +4,7 @@ import Foundation
 public struct CredentialResponse: Codable {
     let credential: AnyCodable
 
-    func toJsonString() throws -> String {
+    public func toJsonString() throws -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         let data = try encoder.encode(self)
