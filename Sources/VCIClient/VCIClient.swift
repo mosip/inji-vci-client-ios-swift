@@ -49,12 +49,7 @@ public class VCIClient {
             }
             
             if !data.isEmpty {
-                let credentialResponse = try CredentialResponseFactory.createCredentialResponse(
-                    formatType: issuerMeta.credentialFormat,
-                    response: data
-                )
-                print(logTag, "credential downloaded successfully!")
-                return credentialResponse
+                return try JSONDecoder().decode(CredentialResponse.self, from: data)
             } else {
                 print(
                     logTag,
