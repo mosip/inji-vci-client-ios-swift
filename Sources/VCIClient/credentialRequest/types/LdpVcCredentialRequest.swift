@@ -38,7 +38,7 @@ let proof: JWTProof
     }
     
     func generateRequestBody(proofJWT: JWTProof, issuer: IssuerMeta) throws -> Data? {
-        let credentialDefinition = CredentialDefinition(type: issuer.credentialType!)
+        let credentialDefinition = CredentialDefinition(context: getIssuerContext(issuer: issuer), type: issuer.credentialType!)
 
         let credentialRequestBody = CredentialRequestBody(
             format: issuer.credentialFormat,
@@ -52,5 +52,13 @@ let proof: JWTProof
         } catch {
             throw DownloadFailedError.requestBodyEncodingFailed
         }
+    }
+    
+    private func getIssuerContext(issuer: IssuerMeta)->[String]
+    {
+        if(issuer.context != nil){
+            return issuer.context!
+        }
+        return ["https://www.w3.org/2018/credentials/v1"]
     }
 }

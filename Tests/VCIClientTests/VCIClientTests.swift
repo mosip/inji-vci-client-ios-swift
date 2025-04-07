@@ -197,6 +197,7 @@ class VCIClientTests: XCTestCase {
     }
     
     func testRequestCredentialFailure() async {
+        
         let mockErrorResponseData = """
         {
             "error": "InvalidPublicKeyError",
@@ -232,4 +233,151 @@ class VCIClientTests: XCTestCase {
             XCTFail("Unexpected error: \(error)")
         }
     }
+    
+    func testFetchCredentialOfferByValueSuccess() async {
+        let offerJson = """
+        {
+            "credential_issuer": "https://issuer.example.com",
+            "credential_configuration_ids": ["UniversityDegreeCredential"]
+        }
+        """
+        let encoded = offerJson.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
+        let credentialOfferUri = "openid-credential-offer://?credential_offer=\(encoded)"
+
+        do {
+            let offer = try await client.fetchCredentialOffer(credentialOfferUri)
+            XCTAssertEqual(offer.credentialIssuer, "https://issuer.example.com")
+            XCTAssertEqual(offer.credentialConfigurationIds, ["UniversityDegreeCredential"])
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+    }
+
+    func testFetchCredentialOfferInvalidURL() async {
+        let invalidUrl = "openid-credential-offer://?"
+        do {
+            _ = try await client.fetchCredentialOffer(invalidUrl)
+            XCTFail("Expected failure due to missing parameters")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("Invalid or missing query parameters"))
+        }
+    }
+    
+//    func testRequestCredentialByPreAuthFlowSuccess() async {
+//        
+//        let tokenJson = """
+//        {
+//            "access_token": "mock-token",
+//            "token_type": "bearer",
+//            "expires_in": 300,
+//            "c_nonce": "mock-c-nonce",
+//            "c_nonce_expires_in": 300
+//        }
+//        """.data(using: .utf8)!
+//        
+//        let mockCredentialResponseData = """
+//               {
+//                  "credential": {
+//                   "issuer": "https://domain.net/credentials/",
+//                   "issuanceDate": "2024-05-12T16:12:47.266Z",
+//                   "id": "https://domain.net/credentials/858c69d7-676a-4f19-ba51-d9ed754f2935",
+//                   "proof": {
+//                     "proofPurpose": "assertionMethod",
+//                     "created": "2024-05-12T16:12:47Z",
+//                     "jws": "eyJr80435=",
+//                     "verificationMethod": "https://domain.net/.well-known/ida-public-key.json",
+//                     "type": "RsaSignature2018"
+//                   },
+//                   "credentialSubject": {
+//                     "gender": [
+//                       {
+//                         "value": "Male",
+//                         "language": "eng"
+//                       }
+//                     ],
+//                     "phone": "9876567893",
+//                     "city": [
+//                       {
+//                         "value": "Kenitra",
+//                         "language": "eng"
+//                       }
+//                     ],
+//                     "id": "did:jwk:eyJrdHkiOi==",
+//                     "dateOfBirth": "1999/01/01",
+//                     "fullName": [
+//                       {
+//                         "value": "santhush",
+//                         "language": "eng"
+//                       }
+//                     ],
+//                     "face": "daVqaL0H1oorC",
+//                     "addressLine1": [
+//                       {
+//                         "value": "saravangar",
+//                         "language": "eng"
+//                       }
+//                     ],
+//                     "email": "sunthoush@gmail.com",
+//                     "UIN": "9612973623"
+//                   },
+//                   "type": [
+//                     "VerifiableCredential",
+//                     "MOSIPVerifiableCredential"
+//                   ],
+//                   "@context": [
+//                     "https://www.domain.org/2018/credentials/v1",
+//                     "https://api.domain.net/.well-known/domain-context.json",
+//                     {
+//                       "sec": "https://w3id.org/security#"
+//                     }
+//                   ]
+//                 }
+//               }
+//        """.data(using: .utf8)
+//
+//        let tokenHttpResponse = HTTPURLResponse(url: URL(string: "https://issuer.example.com/token")!,
+//                                                statusCode: 200,
+//                                                httpVersion: nil,
+//                                                headerFields: nil)!
+//
+//        let mockCredentialResponse = HTTPURLResponse(url: URL(string: "https://domain.net/credentials/12345-87435")!,
+//                                                     statusCode: 200,
+//                                                     httpVersion: "1.1",
+//                                                     headerFields: ["Content-Type": "application/json"])!
+//        
+//        mockSession.data = tokenJson
+//        mockSession.response = tokenHttpResponse
+//
+//        
+//        mockSession.data = mockCredentialResponseData
+//        mockSession.response = mockCredentialResponse
+//
+//        let issuerMeta = IssuerMeta(
+//            credentialAudience: "https://issuer.example.com",
+//            credentialEndpoint: "https://issuer.example.com/credential",
+//            downloadTimeoutInMilliseconds: 5000,
+//            credentialType: ["VerifiableCredential"],
+//            credentialFormat: .ldp_vc,
+//            preAuthorizedCode: "mock-pre-auth",
+//            tokenEndpoint: "https://issuer.example.com/token"
+//        )
+//
+//        do {
+//            let response = try await client.requestCredentialByPreAuthFlow(
+//                issuerMetaData: issuerMeta,
+//                txCode: nil,
+//                getProofJwt: { accessToken, cNonce in
+//                    XCTAssertEqual(accessToken, "mock-token")
+//                    XCTAssertEqual(cNonce, "mock-c-nonce")
+//                    return "signed-jwt"
+//                },
+//                networkSession: mockSession
+//            )
+//            XCTAssertNotNil(response)
+//        } catch {
+//            XCTFail("Unexpected error: \(error)")
+//        }
+//    }
+
+
 }
