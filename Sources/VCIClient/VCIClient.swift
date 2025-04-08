@@ -7,7 +7,7 @@ public class VCIClient {
     let credentialRequestFactory: CredentialRequestFactoryProtocol
     
     public init(traceabilityId: String,
-                networkSession: NetworkSession? = nil, 
+                networkSession: NetworkSession? = nil,
                 credentialRequestFactory: CredentialRequestFactoryProtocol? = nil ) {
         self.traceabilityId = traceabilityId
         self.networkSession = networkSession ?? URLSession.shared
@@ -62,6 +62,57 @@ public class VCIClient {
             return nil
         }
     }
+    
+    public func fetchCredentialOffer(_ credentialOfferData: String) async throws -> CredentialOffer {
+        do {
+            
+            let normalized = credentialOfferData.replacingOccurrences(of: "openid-credential-offer://?", with: "openid-credential-offer://dummy?")
+            
+            guard let url = URL(string: normalized),
+                  let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                  let queryItems = components.queryItems, queryItems.count > 0 else {
+                throw CredentialOfferError.invalidOffer( description: "Invalid or missing query parameters")
+            }
+            
+            
+            let queryParams = Dictionary(uniqueKeysWithValues: queryItems.map { ($0.name, $0.value ?? "") })
+            
+            
+            let credentialOfferService = CredentialOfferService()
+            
+            if let offer = queryParams["credential_offer"] {
+                return try credentialOfferService.handleByValueOffer(encodedOffer: offer)
+            } else if let uri = queryParams["credential_offer_uri"] {
+                return try await credentialOfferService.handleByReferenceOffer(from: uri)
+            } else {
+                throw CredentialOfferError.invalidOffer(description:"Missing credential_offer or credential_offer_uri")
+            }
+        } catch {
+            throw CredentialOfferError.invalidOffer(description: "Failed to parse credential offer: \(error.localizedDescription)")
+        }
+    }
+    
+    public func requestCredentialByPreAuthFlow(
+        issuerMetaData: IssuerMeta,
+        txCode: String?,
+        getProofJwt: @escaping (_ accessToken: String, _ cNonce: String?) async throws -> String,
+        networkSession: NetworkSession = URLSession.shared
+    ) async throws -> CredentialResponse? {
+        
+        let tokenService = PreAuthTokenService()
+        let tokenResponse = try await tokenService.exchangePreAuthCodeForToken(
+            issuerMetaData: issuerMetaData,
+            txCode: txCode,
+            session: networkSession
+        )
+        
+        let jwt = try await getProofJwt(tokenResponse.accessToken, tokenResponse.cNonce)
+        let proof =  JWTProof(jwt: jwt)
+        
+        let response = try await requestCredential(issuerMeta: issuerMetaData, proof: proof, accessToken: tokenResponse.accessToken)
+        return response
+    }
+    
     
     private func handleError(error: Error, logTag: String) throws {
         switch error {
