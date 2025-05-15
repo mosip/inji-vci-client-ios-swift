@@ -1,46 +1,63 @@
 import Foundation
 
-public struct CredentialOfferService {
-    private let session: NetworkSession
+public class CredentialOfferService {
+    private let session: NetworkManager
 
-    public init(session: NetworkSession = URLSession.shared) {
+    public init(session: NetworkManager = NetworkManager.shared) {
         self.session = session
     }
 
-    public func handleByValueOffer(encodedOffer: String) throws -> CredentialOffer {
-        guard let decoded = encodedOffer.removingPercentEncoding else {
-            throw CredentialOfferError.invalidJson
+    func fetchCredentialOffer(_ credentialOfferData: String) async throws -> CredentialOffer {
+        let normalized = credentialOfferData.replacingOccurrences(of: "openid-credential-offer://?", with: "openid-credential-offer://dummy?")
+
+        guard let url = URL(string: normalized),
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let queryItems = components.queryItems else {
+            throw OfferFetchFailedException("Invalid credential offer format")
         }
 
+        let queryParams = Dictionary(uniqueKeysWithValues: queryItems.map { ($0.name, $0.value ?? "") })
+
+        if let encoded = queryParams["credential_offer"] {
+            return try handleByValueOffer(encodedOffer: encoded)
+        } else if let uri = queryParams["credential_offer_uri"] {
+            return try await handleByReferenceOffer(url: uri)
+        } else {
+            throw OfferFetchFailedException("Missing 'credential_offer' or 'credential_offer_uri'")
+        }
+    }
+
+    func handleByValueOffer(encodedOffer: String) throws -> CredentialOffer {
+        guard let decoded = encodedOffer.removingPercentEncoding else {
+            throw OfferFetchFailedException("Invalid json")
+        }
         return try parseCredentialOffer(json: decoded)
     }
 
-    public func handleByReferenceOffer(from urlString: String) async throws -> CredentialOffer {
-        guard let url = URL(string: urlString),
-              url.scheme != nil,
-              url.host != nil else {
-            throw CredentialOfferError.fetchFailed("Invalid URL")
+    func handleByReferenceOffer(url: String) async throws -> CredentialOffer {
+        guard let requestURL = URL(string: url),
+              requestURL.scheme != nil,
+              requestURL.host != nil else {
+            throw OfferFetchFailedException("Invalid credential_offer_uri")
         }
 
-        var request = URLRequest(url: url)
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        // Use your NetworkManager to send the request
+        let response = try await session.sendRequest(
+            url: url,
+            method: .get,
+            headers: ["Accept": "application/json"]
+        )
 
-        let (data, _) = try await session.data(for: request)
-
-        guard !data.isEmpty else {
-            throw CredentialOfferError.emptyResponse
+        guard !response.body.isEmpty else {
+            throw OfferFetchFailedException("Credential offer response was empty.")
         }
 
-        guard let json = String(data: data, encoding: .utf8) else {
-            throw CredentialOfferError.invalidJson
-        }
-
-        return try parseCredentialOffer(json: json)
+        return try parseCredentialOffer(json: response.body)
     }
 
     private func parseCredentialOffer(json: String) throws -> CredentialOffer {
         guard let data = json.data(using: .utf8) else {
-            throw CredentialOfferError.invalidJson
+            throw OfferFetchFailedException("Invalid json")
         }
 
         let decoder = JSONDecoder()

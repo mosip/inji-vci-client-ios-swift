@@ -1,79 +1,110 @@
-import XCTest
 @testable import VCIClient
+import XCTest
 
 final class CredentialOfferServiceTests: XCTestCase {
-
-    var mockSession: MockNetworkSession!
-    var service: CredentialOfferService!
-
-    override func setUp() {
-        super.setUp()
-        mockSession = MockNetworkSession()
-        service = CredentialOfferService(session: mockSession)
-    }
-
-    override func tearDown() {
-        mockSession = nil
-        service = nil
-        super.tearDown()
-    }
-
-    func testHandleByValueOffer_Success() throws {
-        let validJson = """
+    func test_fetchCredentialOffer_byValue_shouldParseSuccessfully() async throws {
+        let mockJSON = """
         {
-            "credential_issuer": "https://issuer.example.com",
-            "credential_configuration_ids": ["UniversityDegreeCredential"]
+            "credential_issuer": "https://did:example:1234",
+            "credential_configuration_ids": ["mock-cred-id"]
         }
-        """.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
+        """
+        let encoded = mockJSON.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
+        let url = "openid-credential-offer://?credential_offer=\(encoded)"
 
-        let offer = try service.handleByValueOffer(encodedOffer: validJson)
-        XCTAssertEqual(offer.credentialIssuer, "https://issuer.example.com")
+        let service = CredentialOfferService()
+        let offer = try await service.fetchCredentialOffer(url)
+
+        XCTAssertEqual(offer.credentialIssuer, "https://did:example:1234")
     }
 
-    func testHandleByReferenceOffer_Success() async throws {
-        let responseJson = """
+    func test_fetchCredentialOffer_byReference_shouldParseSuccessfully() async throws {
+        let mockManager = MockNetworkManager()
+        mockManager.responseBody =  """
         {
-            "credential_issuer": "https://issuer.example.com",
-            "credential_configuration_ids": ["UniversityDegreeCredential"]
+            "credential_issuer": "https://did:example:1234",
+            "credential_configuration_ids":  ["mock-ref-id"]
         }
-        """.data(using: .utf8)!
+        """
 
-        mockSession.data = responseJson
-        mockSession.response = HTTPURLResponse(url: URL(string: "https://issuer.example.com")!,
-                                               statusCode: 200,
-                                               httpVersion: nil,
-                                               headerFields: nil)
+        let uri = "openid-credential-offer://?credential_offer_uri=https://ref.example.com/offer"
+        let service = CredentialOfferService(session: mockManager)
+        let offer = try await service.fetchCredentialOffer(uri)
 
-        let offer = try await service.handleByReferenceOffer(from: "https://issuer.example.com")
-        XCTAssertEqual(offer.credentialIssuer, "https://issuer.example.com")
+        XCTAssertEqual(offer.credentialIssuer, "https://did:example:1234")
     }
 
-    func testHandleByReferenceOffer_ThrowsForEmptyData() async {
-        mockSession.data = Data()
-        mockSession.response = HTTPURLResponse(url: URL(string: "https://issuer.example.com")!,
-                                               statusCode: 200,
-                                               httpVersion: nil,
-                                               headerFields: nil)
+    func test_fetchCredentialOffer_withInvalidURL_shouldThrow() async {
+        let service = CredentialOfferService()
+        let invalid = "invalid-format"
 
         do {
-            _ = try await service.handleByReferenceOffer(from: "https://issuer.example.com")
-            XCTFail("Expected emptyResponse error but got success")
-        } catch let error as CredentialOfferError {
-            XCTAssertEqual(error, .emptyResponse)
+            _ = try await service.fetchCredentialOffer(invalid)
+            XCTFail("Expected OfferFetchFailedException to be thrown")
+        } catch let error as OfferFetchFailedException {
+            XCTAssertTrue(error.localizedDescription.contains("Invalid credential offer format"))
         } catch {
-            XCTFail("Unexpected error: \(error)")
+            XCTFail("Expected OfferFetchFailedException but got \(error)")
         }
     }
 
-    func testHandleByReferenceOffer_ThrowsForInvalidURL() async {
+    
+
+    func test_fetchCredentialOffer_emptyResponse_shouldThrow() async {
+        let mockManager = MockNetworkManager()
+        mockManager.responseBody = ""
+
+        let uri = "openid-credential-offer://?credential_offer_uri=https://example.com"
+        let service = CredentialOfferService(session: mockManager)
+
         do {
-            _ = try await service.handleByReferenceOffer(from: "invalid-url")
-            XCTFail("Expected fetchFailed error for invalid URL")
-        } catch let error as CredentialOfferError {
-            XCTAssertEqual(error, .fetchFailed("Invalid URL"))
+            _ = try await service.fetchCredentialOffer(uri)
+            XCTFail("Expected OfferFetchFailedException to be thrown")
+        } catch let error as OfferFetchFailedException {
+            XCTAssertTrue(error.localizedDescription.contains("response was empty"))
         } catch {
-            XCTFail("Unexpected error: \(error)")
+            XCTFail("Expected OfferFetchFailedException but got \(error)")
         }
     }
 
+    func test_fetchCredentialOffer_missingQueryParams_shouldThrow() async {
+        let service = CredentialOfferService()
+        let noParams = "openid-credential-offer://?"
+
+        do {
+            _ = try await service.fetchCredentialOffer(noParams)
+            XCTFail("Expected OfferFetchFailedException to be thrown")
+        } catch let error as OfferFetchFailedException {
+            XCTAssertTrue(error.localizedDescription.contains("Missing 'credential_offer' or 'credential_offer_uri'"))
+        } catch {
+            XCTFail("Expected OfferFetchFailedException but got \(error)")
+        }
+    }
+
+    func test_handleByValueOffer_withBadJson_shouldThrow() async {
+        let service = CredentialOfferService()
+        let badJson = "%7Bbad-json%7D" // "{bad-json}" percent-encoded
+        do {
+            _ =  try await service.fetchCredentialOffer(badJson)
+            XCTFail("Expected OfferFetchFailedException to be thrown")
+        } catch let error as OfferFetchFailedException {
+            XCTAssertTrue(error.localizedDescription.contains("Invalid credential offer"))
+        } catch {
+            XCTFail("Expected OfferFetchFailedException but got \(error)")
+        }
+       
+    }
+
+    func test_handleByReferenceOffer_invalidURL_shouldThrow() async {
+        let service = CredentialOfferService()
+        do {
+            _ = try await service.fetchCredentialOffer("invalid")
+            XCTFail("Expected OfferFetchFailedException to be thrown")
+        } catch let error as OfferFetchFailedException {
+            print("------",error.localizedDescription)
+            XCTAssertTrue(error.localizedDescription.contains("Invalid credential offer"))
+        } catch {
+            XCTFail("Expected OfferFetchFailedException but got \(error)")
+        }
+    }
 }
