@@ -1,0 +1,43 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches:
+      - master
+      - 'release-*'
+  pull_request:
+    branches:
+      - master
+      - 'release-*'
+      - develop
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze Swift Code
+    runs-on: macos-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: swift
+          build-mode: manual
+
+      - name: Build with Xcode
+        run: |
+          xcodebuild -scheme VCIClient -destination 'generic/platform=iOS' build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
