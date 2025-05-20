@@ -4,14 +4,14 @@ name: "CodeQL Advanced"
 on:
   push:
     branches: 
-      - main
+      - master
       - develop
       - feature/**
       - hotfix/**
       - release-*
   pull_request:
     branches:
-      - main
+      - master
       - develop
       - feature/**
       - hotfix/**
