@@ -1,4 +1,3 @@
-
 name: "CodeQL Advanced"
 
 on:
@@ -48,15 +47,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-
-
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
-        # If you wish to specify custom queries, you can do so here or in a config file.
+        config-file: ./.github/codeql/codeql-config.yml
 
     - if: matrix.build-mode == 'manual'
       shell: bash
@@ -67,7 +64,6 @@ jobs:
         echo '  make bootstrap'
         echo '  make release'
         exit 1
-
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
