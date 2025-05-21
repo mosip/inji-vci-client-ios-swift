@@ -67,3 +67,5 @@ An example app is added under [/SwiftExample](./SwiftExample) folder which can b
 ## Architecture decisions
 
 Architecture decisions are noted as ADRs [here](https://github.com/mosip/inji-vci-client/tree/master/doc).
+
+Node: The android library is available [here](https://github.com/mosip/inji-vci-client)
