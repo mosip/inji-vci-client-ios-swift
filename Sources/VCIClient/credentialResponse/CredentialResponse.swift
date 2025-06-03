@@ -1,6 +1,5 @@
 import Foundation
 
-
 public struct CredentialResponse: Codable {
     let credential: AnyCodable
 
@@ -9,7 +8,7 @@ public struct CredentialResponse: Codable {
         encoder.outputFormatting = .prettyPrinted
         let data = try encoder.encode(self)
         guard let jsonString = String(data: data, encoding: .utf8) else {
-            throw DownloadFailedError.encodingResponseFailed
+            throw DownloadFailedException("")
         }
         return jsonString
     }
@@ -17,11 +16,11 @@ public struct CredentialResponse: Codable {
 
 public struct AnyCodable: Codable {
     var value: Any
-    
+
     init(_ value: Any) {
         self.value = value
     }
-    
+
     public init(from decoder: Decoder) throws {
         let logTag = Util.getLogTag(className: String(describing: type(of: self)))
         let container = try decoder.singleValueContainer()
@@ -40,11 +39,11 @@ public struct AnyCodable: Codable {
         } else if container.decodeNil() {
             value = Optional<Any>.none as Any
         } else {
-            print(logTag,"Error occured while decoding response")
-            throw DownloadFailedError.decodingResponseFailed
+            print(logTag, "Error occured while decoding response")
+            throw DownloadFailedException("")
         }
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         let logTag = Util.getLogTag(className: String(describing: type(of: self)))
         var container = encoder.singleValueContainer()
@@ -63,8 +62,8 @@ public struct AnyCodable: Codable {
         } else if value is Optional<Any> {
             try container.encodeNil()
         } else {
-            print(logTag,"Error occured while encoding response")
-            throw DownloadFailedError.encodingResponseFailed
+            print(logTag, "Error occured while encoding response")
+            throw DownloadFailedException("")
         }
     }
 }

@@ -4,7 +4,7 @@ struct CredentialRequestBody: Encodable {
     let format: CredentialFormat
     let credential_definition: CredentialDefinition
     let proof: JWTProof
-    
+
     init(format: CredentialFormat, credential_definition: CredentialDefinition, proof: JWTProof) {
         self.format = format
         self.credential_definition = credential_definition
@@ -25,5 +25,4 @@ struct CredentialDefinition: Codable {
         self.context = context
         self.type = type
     }
-
 }

@@ -1,56 +1,59 @@
 import Foundation
 
-class LdpVcCredentialRequest: CredentialRequestProtocol{
-let accessToken: String
-let issuerMetaData: IssuerMeta
-let proof: JWTProof
-    required init(accessToken: String, issuerMetaData: IssuerMeta, proof: JWTProof) {
+class LdpVcCredentialRequest: CredentialRequestProtocol {
+    let accessToken: String
+    let issuerMetaData: IssuerMetadata
+    let proof: JWTProof
+    required init(accessToken: String, issuerMetaData: IssuerMetadata, proof: JWTProof) {
         self.accessToken = accessToken
         self.issuerMetaData = issuerMetaData
         self.proof = proof
     }
-    
+
     func validateIssuerMetadata() -> ValidatorResult {
-        let validatorResult =  ValidatorResult()
-        if(self.issuerMetaData.credentialType == nil || self.issuerMetaData.credentialType?.count == 0){
+        let validatorResult = ValidatorResult()
+        if issuerMetaData.credentialType == nil || issuerMetaData.credentialType?.count == 0 {
             validatorResult.addInvalidField("credentialType")
-            
         }
         return validatorResult
-        
     }
-    
-    
-    func constructRequest() throws -> URLRequest{
-        var request = URLRequest(url: URL(string: self.issuerMetaData.credentialEndpoint)!)
+
+    func constructRequest() throws -> URLRequest {
+        var request = URLRequest(url: URL(string: issuerMetaData.credentialEndpoint)!)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = TimeInterval(self.issuerMetaData.downloadTimeoutInMilliseconds / 1000)
-        
-        guard let requestBody = try generateRequestBody(proofJWT: self.proof, issuer: self.issuerMetaData) else {
-            throw DownloadFailedError.requestGenerationFailed
+
+        guard let requestBody = try generateRequestBody(proofJWT: proof, issuer: issuerMetaData) else {
+            throw DownloadFailedException("")
         }
 
         request.httpBody = requestBody
 
         return request
     }
-    
-    func generateRequestBody(proofJWT: JWTProof, issuer: IssuerMeta) throws -> Data? {
-        let credentialDefinition = CredentialDefinition(type: issuer.credentialType!)
+
+    func generateRequestBody(proofJWT: JWTProof, issuer: IssuerMetadata) throws -> Data? {
+        let credentialDefinition = CredentialDefinition(context: getIssuerContext(issuer: issuer), type: issuer.credentialType!)
 
         let credentialRequestBody = CredentialRequestBody(
             format: issuer.credentialFormat,
             credential_definition: credentialDefinition,
             proof: proofJWT
         )
-        
+
         do {
             let jsonData = try JSONEncoder().encode(credentialRequestBody)
             return jsonData
         } catch {
-            throw DownloadFailedError.requestBodyEncodingFailed
+            throw DownloadFailedException("")
         }
+    }
+
+    private func getIssuerContext(issuer: IssuerMetadata) -> [String] {
+        if issuer.context != nil {
+            return issuer.context!
+        }
+        return ["https://www.w3.org/2018/credentials/v1"]
     }
 }

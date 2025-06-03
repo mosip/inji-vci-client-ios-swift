@@ -1,86 +1,82 @@
 import Foundation
 
 public class VCIClient {
-    
-    let networkSession: NetworkSession
+    let networkSession: NetworkManager
     let traceabilityId: String
-    let credentialRequestFactory: CredentialRequestFactoryProtocol
+    let credentialOfferHandler: CredentialOfferHandler
+    let trustedIssuerHandler: TrustedIssuerHandler
+    private let trustedIssuerRegistry = TrustedIssuerRegistry()
     
     public init(traceabilityId: String,
-                networkSession: NetworkSession? = nil, 
-                credentialRequestFactory: CredentialRequestFactoryProtocol? = nil ) {
+                networkSession: NetworkManager? = nil,
+                credentialRequestFactory: CredentialRequestFactoryProtocol? = nil,
+                credentialOfferHandler: CredentialOfferHandler? = nil,
+                trustedIssuerHandler: TrustedIssuerHandler? = nil
+    ) {
         self.traceabilityId = traceabilityId
-        self.networkSession = networkSession ?? URLSession.shared
-        self.credentialRequestFactory = credentialRequestFactory ?? CredentialRequestFactory.shared
+        self.networkSession = networkSession ?? NetworkManager.shared
+        self.credentialOfferHandler = credentialOfferHandler ?? CredentialOfferHandler()
+        self.trustedIssuerHandler = trustedIssuerHandler ?? TrustedIssuerHandler()
     }
-    
-    public func requestCredential(
-        issuerMeta: IssuerMeta,
-        proof: Proof,
-        accessToken: String
+
+    public func requestCredentialByCredentialOffer(
+        credentialOffer: String,
+        clientMetadata: ClientMetaData,
+        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)?,
+        getProofJwt: @escaping (
+            _ accessToken: String,
+            _ cNonce: String?,
+            _ issuerMetadata: [String: Any]?,
+            _ credentialConfigurationId: String?
+        ) async throws -> String,
+        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
+        onCheckIssuerTrust: ((_ issuerMetadata: [String: Any]) async throws -> Bool)? = nil,
+        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse? {
-        let logTag = Util.getLogTag(className: String(describing: type(of: self)), traceabilityId: traceabilityId)
         do {
-            
-            guard let url = URL(string: issuerMeta.credentialEndpoint) else {
-                throw DownloadFailedError.invalidURL
-            }
-            
-            let request = try credentialRequestFactory.createCredentialRequest(
-                url: url,
-                credentialFormat: issuerMeta.credentialFormat,
-                accessToken: accessToken,
-                issuer: issuerMeta,
-                proofJwt: proof
+            return try await credentialOfferHandler.downloadCredentials(
+                credentialOffer: credentialOffer,
+                clientMetadata: clientMetadata,
+                getTxCode: getTxCode,
+                getProofJwt: getProofJwt,
+                getAuthCode: getAuthCode,
+                onCheckIssuerTrust: onCheckIssuerTrust,
+                networkSession: networkSession,
+                downloadTimeoutInMillis: downloadTimeoutInMillis,
+                trustedIssuerRegistry:trustedIssuerRegistry
             )
-            
-            let (data, response) = try await networkSession.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw DownloadFailedError.noResponse
-            }
-            
-            guard httpResponse.statusCode == 200 else {
-                let statusCode = httpResponse.statusCode
-                let errorDescription = HTTPURLResponse.localizedString(forStatusCode: statusCode)
-                print(logTag,
-                      "Downloading credential failed with response code \(statusCode) - \(errorDescription)"
-                )
-                throw DownloadFailedError.httpError(statusCode: statusCode, description: errorDescription)
-            }
-            
-            if !data.isEmpty {
-                return try JSONDecoder().decode(CredentialResponse.self, from: data)
-            } else {
-                print(
-                    logTag,
-                    "The response body from credentialEndpoint is empty, responseCode - \(httpResponse.statusCode), responseMessage \(HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)), returning null."
-                )
-                throw DownloadFailedError.noResponse
-            }
+        } catch let e as VCIClientException {
+            throw e
         } catch {
-            try handleError(error: error, logTag: logTag)
-            return nil
+            throw VCIClientException(code: "VCI-010", message: "Unknown exception occurred")
         }
     }
-    
-    private func handleError(error: Error, logTag: String) throws {
-        switch error {
-        case let nsError as NSError where nsError.domain == NSURLErrorDomain:
-            switch nsError.code {
-            case NSURLErrorNotConnectedToInternet:
-                throw DownloadFailedError.httpError(statusCode: NSURLErrorNotConnectedToInternet, description: "No internet connection")
-            case NSURLErrorTimedOut:
-                throw NetworkRequestTimeOutError.networkRequestTimeOutError
-            default:
-                throw DownloadFailedError.httpError(statusCode: nsError.code, description: nsError.localizedDescription)
-            }
-        case is DownloadFailedError:
-            let description = "Download failed due to \(error)"
-            print("\(logTag) \(description)")
-            throw DownloadFailedError.customError(description: description)
-        default:
-            print("\(logTag) Unknown error :", error)
-            throw error
+
+    public func requestCredentialFromTrustedIssuer(
+        issuerMetadata: IssuerMetadata,
+        clientMetadata: ClientMetaData,
+        getProofJwt: @escaping (
+            _ accessToken: String,
+            _ cNonce: String?,
+            _ issuerMetadata: [String: Any]?,
+            _ credentialConfigurationId: String?
+        ) async throws -> String,
+        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
+        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
+    ) async throws -> CredentialResponse? {
+        do {
+            return try await trustedIssuerHandler.downloadCredentials(
+                issuerMetadata: issuerMetadata,
+                clientMetadata: clientMetadata,
+                getAuthCode: getAuthCode,
+                getProofJwt: getProofJwt,
+                downloadTimeoutInMillis: downloadTimeoutInMillis,
+                networkSession: networkSession
+            )
+        } catch let e as VCIClientException {
+            throw e
+        } catch {
+            throw VCIClientException(code: "VCI-010", message: "Unknown exception occurred")
         }
     }
 }

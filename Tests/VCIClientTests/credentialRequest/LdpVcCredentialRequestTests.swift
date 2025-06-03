@@ -6,9 +6,8 @@ class LdpVcCredentialRequestTests: XCTestCase {
     var credentialRequest: LdpVcCredentialRequest!
     let url = URL(string: "https://domain.net/credential")!
     let accessToken = "AccessToken"
-    let issuer = IssuerMeta(credentialAudience: "https://domain.net",
+    let issuer = IssuerMetadata(credentialAudience: "https://domain.net",
                             credentialEndpoint: "https://domain.net/credential",
-                            downloadTimeoutInMilliseconds: 20000,
                             credentialType: ["VerifiableCredential"],
                             credentialFormat: .ldp_vc)
     let proofJWT = JWTProof(jwt: "ProofJWT")
@@ -32,7 +31,6 @@ class LdpVcCredentialRequestTests: XCTestCase {
             XCTAssertEqual(request.httpMethod, "POST")
             XCTAssertEqual(request.allHTTPHeaderFields?["Content-Type"], "application/json")
             XCTAssertEqual(request.allHTTPHeaderFields?["Authorization"], "Bearer \(accessToken)")
-            XCTAssertEqual(request.timeoutInterval, TimeInterval(issuer.downloadTimeoutInMilliseconds / 1000))
             XCTAssertNotNil(request.httpBody)
         } catch {
             XCTFail("Error: \(error.localizedDescription)")
@@ -41,9 +39,9 @@ class LdpVcCredentialRequestTests: XCTestCase {
     
     func testGenerateRequestBodySuccess() {
         let proofJWT = JWTProof(jwt: "xxxx.yyyy.zzzz")
-        let issuer = IssuerMeta(credentialAudience: "https://domain.net",
+        let issuer = IssuerMetadata(credentialAudience: "https://domain.net",
                                 credentialEndpoint: "https://domain.net/credential",
-                                downloadTimeoutInMilliseconds: 20000,
+                                
                                 credentialType: ["VerifiableCredential"],
                                 credentialFormat: .ldp_vc)
         
@@ -69,9 +67,9 @@ class LdpVcCredentialRequestTests: XCTestCase {
     }
     
     func testshouldReturnValidatorResultWithIsValidAsFalseWithInvalidFieldsWhenRequiredCredentialTypeIsNotAvailableInIssuerMetadata() {
-        let issuerMetadataWithoutCredentialType = IssuerMeta(credentialAudience: "https://domain.net",
+        let issuerMetadataWithoutCredentialType = IssuerMetadata(credentialAudience: "https://domain.net",
                                 credentialEndpoint: "https://domain.net/credential",
-                                downloadTimeoutInMilliseconds: 20000,
+                                
                                 credentialFormat: .mso_mdoc)
         credentialRequest = LdpVcCredentialRequest(accessToken: accessToken, issuerMetaData: issuerMetadataWithoutCredentialType, proof: proofJWT)
         
