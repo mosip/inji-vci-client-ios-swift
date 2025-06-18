@@ -1,0 +1,633 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9CDEF6732E01597D00FA280B /* Clibsodium in Frameworks */ = {isa = PBXBuildFile; productRef = 9CDEF6722E01597D00FA280B /* Clibsodium */; };
+		9CDEF6752E01597D00FA280B /* Sodium in Frameworks */ = {isa = PBXBuildFile; productRef = 9CDEF6742E01597D00FA280B /* Sodium */; };
+		9CDEF6782E01599C00FA280B /* VCIClient in Frameworks */ = {isa = PBXBuildFile; productRef = 9CDEF6772E01599C00FA280B /* VCIClient */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9CDEF64E2E0157CA00FA280B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CDEF6352E0157C800FA280B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CDEF63C2E0157C800FA280B;
+			remoteInfo = SampleVCIClient;
+		};
+		9CDEF6582E0157CA00FA280B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9CDEF6352E0157C800FA280B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CDEF63C2E0157C800FA280B;
+			remoteInfo = SampleVCIClient;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		9CDEF63D2E0157C800FA280B /* SampleVCIClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SampleVCIClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CDEF64D2E0157CA00FA280B /* SampleVCIClientTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SampleVCIClientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9CDEF6572E0157CA00FA280B /* SampleVCIClientUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SampleVCIClientUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9CDEF67A2E015AFC00FA280B /* Exceptions for "SampleVCIClient" folder in "SampleVCIClient" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9CDEF63C2E0157C800FA280B /* SampleVCIClient */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		9CDEF63F2E0157C800FA280B /* SampleVCIClient */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9CDEF67A2E015AFC00FA280B /* Exceptions for "SampleVCIClient" folder in "SampleVCIClient" target */,
+			);
+			path = SampleVCIClient;
+			sourceTree = "<group>";
+		};
+		9CDEF6502E0157CA00FA280B /* SampleVCIClientTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SampleVCIClientTests;
+			sourceTree = "<group>";
+		};
+		9CDEF65A2E0157CA00FA280B /* SampleVCIClientUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SampleVCIClientUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9CDEF63A2E0157C800FA280B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CDEF6782E01599C00FA280B /* VCIClient in Frameworks */,
+				9CDEF6732E01597D00FA280B /* Clibsodium in Frameworks */,
+				9CDEF6752E01597D00FA280B /* Sodium in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CDEF64A2E0157CA00FA280B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CDEF6542E0157CA00FA280B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9CDEF6342E0157C800FA280B = {
+			isa = PBXGroup;
+			children = (
+				9CDEF63F2E0157C800FA280B /* SampleVCIClient */,
+				9CDEF6502E0157CA00FA280B /* SampleVCIClientTests */,
+				9CDEF65A2E0157CA00FA280B /* SampleVCIClientUITests */,
+				9CDEF63E2E0157C800FA280B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9CDEF63E2E0157C800FA280B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9CDEF63D2E0157C800FA280B /* SampleVCIClient.app */,
+				9CDEF64D2E0157CA00FA280B /* SampleVCIClientTests.xctest */,
+				9CDEF6572E0157CA00FA280B /* SampleVCIClientUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9CDEF63C2E0157C800FA280B /* SampleVCIClient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CDEF6612E0157CA00FA280B /* Build configuration list for PBXNativeTarget "SampleVCIClient" */;
+			buildPhases = (
+				9CDEF6392E0157C800FA280B /* Sources */,
+				9CDEF63A2E0157C800FA280B /* Frameworks */,
+				9CDEF63B2E0157C800FA280B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9CDEF63F2E0157C800FA280B /* SampleVCIClient */,
+			);
+			name = SampleVCIClient;
+			packageProductDependencies = (
+				9CDEF6722E01597D00FA280B /* Clibsodium */,
+				9CDEF6742E01597D00FA280B /* Sodium */,
+				9CDEF6772E01599C00FA280B /* VCIClient */,
+			);
+			productName = SampleVCIClient;
+			productReference = 9CDEF63D2E0157C800FA280B /* SampleVCIClient.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9CDEF64C2E0157CA00FA280B /* SampleVCIClientTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CDEF6642E0157CA00FA280B /* Build configuration list for PBXNativeTarget "SampleVCIClientTests" */;
+			buildPhases = (
+				9CDEF6492E0157CA00FA280B /* Sources */,
+				9CDEF64A2E0157CA00FA280B /* Frameworks */,
+				9CDEF64B2E0157CA00FA280B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9CDEF64F2E0157CA00FA280B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9CDEF6502E0157CA00FA280B /* SampleVCIClientTests */,
+			);
+			name = SampleVCIClientTests;
+			packageProductDependencies = (
+			);
+			productName = SampleVCIClientTests;
+			productReference = 9CDEF64D2E0157CA00FA280B /* SampleVCIClientTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		9CDEF6562E0157CA00FA280B /* SampleVCIClientUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CDEF6672E0157CA00FA280B /* Build configuration list for PBXNativeTarget "SampleVCIClientUITests" */;
+			buildPhases = (
+				9CDEF6532E0157CA00FA280B /* Sources */,
+				9CDEF6542E0157CA00FA280B /* Frameworks */,
+				9CDEF6552E0157CA00FA280B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9CDEF6592E0157CA00FA280B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9CDEF65A2E0157CA00FA280B /* SampleVCIClientUITests */,
+			);
+			name = SampleVCIClientUITests;
+			packageProductDependencies = (
+			);
+			productName = SampleVCIClientUITests;
+			productReference = 9CDEF6572E0157CA00FA280B /* SampleVCIClientUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9CDEF6352E0157C800FA280B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1610;
+				LastUpgradeCheck = 1610;
+				TargetAttributes = {
+					9CDEF63C2E0157C800FA280B = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					9CDEF64C2E0157CA00FA280B = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 9CDEF63C2E0157C800FA280B;
+					};
+					9CDEF6562E0157CA00FA280B = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 9CDEF63C2E0157C800FA280B;
+					};
+				};
+			};
+			buildConfigurationList = 9CDEF6382E0157C800FA280B /* Build configuration list for PBXProject "SampleVCIClient" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9CDEF6342E0157C800FA280B;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9CDEF6712E01597D00FA280B /* XCRemoteSwiftPackageReference "swift-sodium" */,
+				9CDEF6762E01599C00FA280B /* XCRemoteSwiftPackageReference "inji-vci-client-ios-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9CDEF63E2E0157C800FA280B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9CDEF63C2E0157C800FA280B /* SampleVCIClient */,
+				9CDEF64C2E0157CA00FA280B /* SampleVCIClientTests */,
+				9CDEF6562E0157CA00FA280B /* SampleVCIClientUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9CDEF63B2E0157C800FA280B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CDEF64B2E0157CA00FA280B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CDEF6552E0157CA00FA280B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9CDEF6392E0157C800FA280B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CDEF6492E0157CA00FA280B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9CDEF6532E0157CA00FA280B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9CDEF64F2E0157CA00FA280B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9CDEF63C2E0157C800FA280B /* SampleVCIClient */;
+			targetProxy = 9CDEF64E2E0157CA00FA280B /* PBXContainerItemProxy */;
+		};
+		9CDEF6592E0157CA00FA280B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9CDEF63C2E0157C800FA280B /* SampleVCIClient */;
+			targetProxy = 9CDEF6582E0157CA00FA280B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		9CDEF65F2E0157CA00FA280B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9CDEF6602E0157CA00FA280B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		9CDEF6622E0157CA00FA280B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"SampleVCIClient/Preview Content\"";
+				DEVELOPMENT_TEAM = V2ABX7953Z;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SampleVCIClient/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "general use";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tw.SampleVCIClient;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9CDEF6632E0157CA00FA280B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"SampleVCIClient/Preview Content\"";
+				DEVELOPMENT_TEAM = V2ABX7953Z;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SampleVCIClient/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "general use";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tw.SampleVCIClient;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9CDEF6652E0157CA00FA280B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V2ABX7953Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tw.SampleVCIClientTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SampleVCIClient.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SampleVCIClient";
+			};
+			name = Debug;
+		};
+		9CDEF6662E0157CA00FA280B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V2ABX7953Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tw.SampleVCIClientTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SampleVCIClient.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SampleVCIClient";
+			};
+			name = Release;
+		};
+		9CDEF6682E0157CA00FA280B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V2ABX7953Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tw.SampleVCIClientUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SampleVCIClient;
+			};
+			name = Debug;
+		};
+		9CDEF6692E0157CA00FA280B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = V2ABX7953Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tw.SampleVCIClientUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SampleVCIClient;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9CDEF6382E0157C800FA280B /* Build configuration list for PBXProject "SampleVCIClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CDEF65F2E0157CA00FA280B /* Debug */,
+				9CDEF6602E0157CA00FA280B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CDEF6612E0157CA00FA280B /* Build configuration list for PBXNativeTarget "SampleVCIClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CDEF6622E0157CA00FA280B /* Debug */,
+				9CDEF6632E0157CA00FA280B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CDEF6642E0157CA00FA280B /* Build configuration list for PBXNativeTarget "SampleVCIClientTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CDEF6652E0157CA00FA280B /* Debug */,
+				9CDEF6662E0157CA00FA280B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9CDEF6672E0157CA00FA280B /* Build configuration list for PBXNativeTarget "SampleVCIClientUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9CDEF6682E0157CA00FA280B /* Debug */,
+				9CDEF6692E0157CA00FA280B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9CDEF6712E01597D00FA280B /* XCRemoteSwiftPackageReference "swift-sodium" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/jedisct1/swift-sodium.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.1;
+			};
+		};
+		9CDEF6762E01599C00FA280B /* XCRemoteSwiftPackageReference "inji-vci-client-ios-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mosip/inji-vci-client-ios-swift/";
+			requirement = {
+				branch = develop;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9CDEF6722E01597D00FA280B /* Clibsodium */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9CDEF6712E01597D00FA280B /* XCRemoteSwiftPackageReference "swift-sodium" */;
+			productName = Clibsodium;
+		};
+		9CDEF6742E01597D00FA280B /* Sodium */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9CDEF6712E01597D00FA280B /* XCRemoteSwiftPackageReference "swift-sodium" */;
+			productName = Sodium;
+		};
+		9CDEF6772E01599C00FA280B /* VCIClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9CDEF6762E01599C00FA280B /* XCRemoteSwiftPackageReference "inji-vci-client-ios-swift" */;
+			productName = VCIClient;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 9CDEF6352E0157C800FA280B /* Project object */;
+}

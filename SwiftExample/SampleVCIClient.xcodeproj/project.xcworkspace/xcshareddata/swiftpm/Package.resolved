@@ -1,0 +1,33 @@
+{
+  "originHash" : "749ecc631aa435673481567f57fd194905ab87699f557b2172b905748846dad7",
+  "pins" : [
+    {
+      "identity" : "inji-vci-client-ios-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mosip/inji-vci-client-ios-swift/",
+      "state" : {
+        "branch" : "develop",
+        "revision" : "8a39bbf7805af4c615904090a027fa472e5f4534"
+      }
+    },
+    {
+      "identity" : "swift-sodium",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jedisct1/swift-sodium.git",
+      "state" : {
+        "revision" : "4f9164a0a2c9a6a7ff53a2833d54a5c79c957342",
+        "version" : "0.9.1"
+      }
+    },
+    {
+      "identity" : "swiftcbor",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/valpackett/SwiftCBOR",
+      "state" : {
+        "revision" : "04ccff117f6549121d5721ec84fdf0162122b90e",
+        "version" : "0.5.0"
+      }
+    }
+  ],
+  "version" : 3
+}
