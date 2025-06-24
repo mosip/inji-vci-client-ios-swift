@@ -1,7 +1,9 @@
 import Foundation
 
 class CredentialRequestExecutor {
-    private let logTag = "[CredentialRequestExecutor]"
+    private var logTag: String {
+           Util.getLogTag(className: String(describing: type(of: self)))
+       }
 
     func requestCredential(
         issuerMetadata: IssuerMetadata,
