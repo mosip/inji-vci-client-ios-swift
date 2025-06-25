@@ -5,7 +5,7 @@ public class VCIClient {
     let traceabilityId: String
     let credentialOfferHandler: CredentialOfferHandler
     let trustedIssuerHandler: TrustedIssuerHandler
-    private let trustedIssuerRegistry = TrustedIssuerRegistry()
+    
 
     public init(traceabilityId: String,
                 networkSession: NetworkManager? = nil,
@@ -46,8 +46,7 @@ public class VCIClient {
                 getAuthCode: getAuthCode,
                 onCheckIssuerTrust: onCheckIssuerTrust,
                 networkSession: networkSession,
-                downloadTimeoutInMillis: downloadTimeoutInMillis,
-                trustedIssuerRegistry: trustedIssuerRegistry
+                downloadTimeoutInMillis: downloadTimeoutInMillis
             )
         } catch let e as VCIClientException {
             throw e
