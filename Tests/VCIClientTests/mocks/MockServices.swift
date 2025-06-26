@@ -92,8 +92,7 @@ final class MockCredentialOfferHandler: CredentialOfferHandler {
         getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
         onCheckIssuerTrust: ((_ issuerMetadata: [String: Any]) async throws -> Bool)? = nil,
         networkSession: NetworkManager = NetworkManager.shared,
-        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
-        trustedIssuerRegistry: TrustedIssuerRegistry
+        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse {
         didCallDownload = true
         if shouldThrow {

@@ -2,7 +2,7 @@ import Foundation
 
 public class CredentialOfferHandler {
     public init() {}
-
+    
     func downloadCredentials(
         credentialOffer: String,
         clientMetadata: ClientMetaData,
@@ -16,22 +16,19 @@ public class CredentialOfferHandler {
         getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
         onCheckIssuerTrust: ((_ issuerMetadata: [String: Any]) async throws -> Bool)? = nil,
         networkSession: NetworkManager = NetworkManager.shared,
-        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
-        trustedIssuerRegistry: TrustedIssuerRegistry
+        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse {
         let offer = try await CredentialOfferService().fetchCredentialOffer(credentialOffer)
-
+        
         let issuerMetadataResponse = try await IssuerMetadataService().fetch(
             issuerUrl: offer.credentialIssuer,
             credentialConfigurationId: offer.credentialConfigurationIds.first ?? ""
         )
-
-        let issuerMeta = issuerMetadataResponse.issuerMetadata
+        
         let rawMeta = issuerMetadataResponse.raw
-        let issuer = issuerMeta.credentialAudience
-
-        try await ensureIssuerTrust(rawMeta as [String: Any], issuer: issuer, onCheck: onCheckIssuerTrust, trustRegistry: trustedIssuerRegistry)
-
+        
+        try await ensureIssuerTrust(rawMeta as [String: Any], onCheck: onCheckIssuerTrust)
+        
         if offer.isPreAuthorizedFlow {
             return try await PreAuthFlowService().requestCredentials(
                 issuerMetadataResult: issuerMetadataResponse,
@@ -55,19 +52,15 @@ public class CredentialOfferHandler {
             throw OfferFetchFailedException("Credential offer does not contain a supported grant type")
         }
     }
-
+    
     private func ensureIssuerTrust(
         _ rawMetadata: [String: Any],
-        issuer: String,
-        onCheck: ((_ issuerMetadata: [String: Any]) async throws -> Bool)?,
-        trustRegistry: TrustedIssuerRegistry
+        onCheck: ((_ issuerMetadata: [String: Any]) async throws -> Bool)?
     ) async throws {
-        guard !trustRegistry.isTrusted(issuer: issuer), let onCheck = onCheck else { return }
-
+        guard let onCheck = onCheck else { return }
+        
         let consented = try await onCheck(rawMetadata)
-        if consented {
-            trustRegistry.markTrusted(issuer: issuer)
-        } else {
+        if !consented {
             throw OfferFetchFailedException("Issuer not trusted by user")
         }
     }
