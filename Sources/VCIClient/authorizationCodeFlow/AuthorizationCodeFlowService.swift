@@ -1,6 +1,6 @@
 import Foundation
 
-final class AuthorizationCodeFlowService {
+ class AuthorizationCodeFlowService {
     private let authServerResolver: AuthServerResolver
     private let tokenService: TokenService
     private let credentialExecutor: CredentialRequestExecutor
