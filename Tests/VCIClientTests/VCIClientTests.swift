@@ -90,4 +90,107 @@ final class VCIClientTests: XCTestCase {
             XCTFail("Expected error did not occur")
         }
     }
+    
+  
+
+    func testDeprecatedRequestCredential_success() async throws {
+        let mockNetwork = MockNetworkManager()
+        // Return a valid JSON body for CredentialResponse
+        mockNetwork.responseBody = "{\"credential\":\"test\"}"
+        
+        let client = VCIClient(
+            traceabilityId: "test",
+            networkSession: mockNetwork
+        )
+        
+        let issuerMeta = IssuerMeta(
+            credentialAudience: "aud",
+            credentialEndpoint: "https://example.com",
+            downloadTimeoutInMilliseconds: 5000, credentialType: ["test"],
+            credentialFormat: .ldp_vc,
+            docType: nil,
+            claims: [:]
+        )
+        
+        let proof = JWTProof(jwt: "mock-jwt")
+        
+        let result = try await client.requestCredential(
+            issuerMeta: issuerMeta,
+            proof: proof,
+            accessToken: "token"
+        )
+        
+        XCTAssertNotNil(result)
+        // Optionally check parsed value
+        XCTAssertEqual(result?.credential.value as? String, "test")
+    }
+
+    func testDeprecatedRequestCredential_failure_invalidJSON() async {
+        let mockNetwork = MockNetworkManager()
+        mockNetwork.responseBody = "{invalid json}"
+
+        let client = VCIClient(
+            traceabilityId: "test",
+            networkSession: mockNetwork
+        )
+        
+        let issuerMeta = IssuerMeta(
+            credentialAudience: "aud",
+            credentialEndpoint: "https://example.com",
+            downloadTimeoutInMilliseconds: 5000, credentialType: ["test"],
+            credentialFormat: .ldp_vc,
+            docType: nil,
+            claims: [:]
+        )
+        
+        let proof = JWTProof(jwt: "mock-jwt")
+        
+        do {
+            _ = try await client.requestCredential(
+                issuerMeta: issuerMeta,
+                proof: proof,
+                accessToken: "token"
+            )
+            XCTFail("Expected DownloadFailedException")
+        } catch is DownloadFailedException {
+            // ✅ expected
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+    func testDeprecatedRequestCredential_failure_networkError() async {
+        let mockNetwork = MockNetworkManager()
+        mockNetwork.shouldThrowNetworkError = true
+
+        let client = VCIClient(
+            traceabilityId: "test",
+            networkSession: mockNetwork
+        )
+        
+        let issuerMeta = IssuerMeta(
+            credentialAudience: "aud",
+            credentialEndpoint: "https://example.com",
+            downloadTimeoutInMilliseconds: 5000, credentialType: ["test"],
+            credentialFormat: .ldp_vc,
+            docType: nil,
+            claims: [:]
+        )
+        
+        let proof = JWTProof(jwt: "mock-jwt")
+        
+        do {
+            _ = try await client.requestCredential(
+                issuerMeta: issuerMeta,
+                proof: proof,
+                accessToken: "token"
+            )
+            XCTFail("Expected DownloadFailedException")
+        } catch is DownloadFailedException {
+            // ✅ expected
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
 }
