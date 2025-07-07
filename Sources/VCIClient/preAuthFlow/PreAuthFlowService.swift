@@ -1,6 +1,6 @@
 import Foundation
 
-final class PreAuthFlowService {
+ class PreAuthFlowService {
     private let authServerResolver: AuthServerResolver
     private let tokenService: TokenService
     private let credentialExecutor: CredentialRequestExecutor

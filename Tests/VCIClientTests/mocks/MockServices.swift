@@ -271,3 +271,73 @@ class TestableCredentialRequestFactory: CredentialRequestFactory {
         }
     }
 }
+final class MockAuthorizationCodeFlowService: AuthorizationCodeFlowService {
+    var didCallRequestCredentials = false
+    var shouldThrow = false
+    var responseToReturn: CredentialResponse?
+
+    override func requestCredentials(
+        issuerMetadataResult: IssuerMetadataResult,
+        clientMetadata: ClientMetaData,
+        credentialOffer: CredentialOffer? = nil,
+        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
+        getProofJwt: @escaping (
+            _ accessToken: String,
+            _ cNonce: String?,
+            _ issuerMetadata: [String: Any]?,
+            _ credentialConfigurationId: String?
+        ) async throws -> String,
+        credentialConfigurationId: String? = nil,
+        downloadTimeOutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
+        session: NetworkManager = NetworkManager.shared
+    ) async throws -> CredentialResponse {
+        didCallRequestCredentials = true
+        if shouldThrow {
+            throw VCIClientException(code: "VCI-009", message: "Simulated error")
+        }
+        return responseToReturn!
+    }
+}
+final class MockCredentialOfferService: CredentialOfferService {
+    var offerToReturn: CredentialOffer!
+
+    override func fetchCredentialOffer(_ offer: String) async throws -> CredentialOffer {
+        return offerToReturn
+    }
+}
+
+final class MockIssuerMetadataService: IssuerMetadataService {
+    var resultToReturn: IssuerMetadataResult!
+
+    override func fetch(
+        issuerUrl: String,
+        credentialConfigurationId: String
+    ) async throws -> IssuerMetadataResult {
+        return resultToReturn
+    }
+}
+
+final class MockPreAuthFlowService: PreAuthFlowService {
+    var didCallRequest = false
+    var responseToReturn: CredentialResponse!
+
+    override func requestCredentials(
+        issuerMetadataResult: IssuerMetadataResult,
+        offer: CredentialOffer,
+        getTxCode: ((_ inputMode: String?, _ description: String?, _ _length: Int?) async throws -> String)? = nil,
+        getProofJwt: @escaping (
+            _ accessToken: String,
+            _ cNonce: String?,
+            _ issuerMetadata: [String: Any],
+            _ credentialConfigurationId: String
+        ) async throws -> String,
+        credentialConfigurationId: String,
+        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
+    ) async throws -> CredentialResponse {
+        didCallRequest = true
+        return responseToReturn
+    }
+}
+
+
+

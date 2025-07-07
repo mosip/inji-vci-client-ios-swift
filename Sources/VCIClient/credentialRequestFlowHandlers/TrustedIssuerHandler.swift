@@ -1,7 +1,9 @@
-import Foundation
-
 public class TrustedIssuerHandler {
-    public init() {}
+    private let authService: AuthorizationCodeFlowService
+
+    init(authService: AuthorizationCodeFlowService = AuthorizationCodeFlowService()) {
+        self.authService = authService
+    }
 
     public func downloadCredentials(
         issuerMetadata: IssuerMetadata,
@@ -16,7 +18,7 @@ public class TrustedIssuerHandler {
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
         networkSession: NetworkManager = NetworkManager.shared
     ) async throws -> CredentialResponse? {
-        return try await AuthorizationCodeFlowService().requestCredentials(
+        return try await authService.requestCredentials(
             issuerMetadataResult: IssuerMetadataResult(issuerMetadata: issuerMetadata, raw: [:]),
             clientMetadata: clientMetadata,
             getAuthCode: getAuthCode,

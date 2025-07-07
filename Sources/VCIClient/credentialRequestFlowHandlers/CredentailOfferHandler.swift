@@ -1,9 +1,22 @@
-import Foundation
-
 public class CredentialOfferHandler {
-    public init() {}
-    
-    func downloadCredentials(
+    private let credentialOfferService: CredentialOfferService
+    private let issuerMetadataService: IssuerMetadataService
+    private let preAuthFlowService: PreAuthFlowService
+    private let authorizationCodeFlowService: AuthorizationCodeFlowService
+
+     init(
+        credentialOfferService: CredentialOfferService = CredentialOfferService(),
+        issuerMetadataService: IssuerMetadataService = IssuerMetadataService(),
+        preAuthFlowService: PreAuthFlowService = PreAuthFlowService(),
+        authorizationCodeFlowService: AuthorizationCodeFlowService = AuthorizationCodeFlowService()
+    ) {
+        self.credentialOfferService = credentialOfferService
+        self.issuerMetadataService = issuerMetadataService
+        self.preAuthFlowService = preAuthFlowService
+        self.authorizationCodeFlowService = authorizationCodeFlowService
+    }
+
+    public func downloadCredentials(
         credentialOffer: String,
         clientMetadata: ClientMetaData,
         getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)?,
@@ -18,19 +31,17 @@ public class CredentialOfferHandler {
         networkSession: NetworkManager = NetworkManager.shared,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse {
-        let offer = try await CredentialOfferService().fetchCredentialOffer(credentialOffer)
-        
-        let issuerMetadataResponse = try await IssuerMetadataService().fetch(
+        let offer = try await credentialOfferService.fetchCredentialOffer(credentialOffer)
+
+        let issuerMetadataResponse = try await issuerMetadataService.fetch(
             issuerUrl: offer.credentialIssuer,
             credentialConfigurationId: offer.credentialConfigurationIds.first ?? ""
         )
-        
-        let rawMeta = issuerMetadataResponse.raw
-        
-        try await ensureIssuerTrust(rawMeta as [String: Any], onCheck: onCheckIssuerTrust)
-        
+
+        try await ensureIssuerTrust(issuerMetadataResponse.raw as [String: Any], onCheck: onCheckIssuerTrust)
+
         if offer.isPreAuthorizedFlow {
-            return try await PreAuthFlowService().requestCredentials(
+            return try await preAuthFlowService.requestCredentials(
                 issuerMetadataResult: issuerMetadataResponse,
                 offer: offer,
                 getTxCode: getTxCode,
@@ -39,7 +50,7 @@ public class CredentialOfferHandler {
                 downloadTimeoutInMillis: downloadTimeoutInMillis
             )
         } else if offer.isAuthorizationCodeFlow {
-            return try await AuthorizationCodeFlowService().requestCredentials(
+            return try await authorizationCodeFlowService.requestCredentials(
                 issuerMetadataResult: issuerMetadataResponse,
                 clientMetadata: clientMetadata,
                 credentialOffer: offer,
@@ -52,7 +63,7 @@ public class CredentialOfferHandler {
             throw OfferFetchFailedException("Credential offer does not contain a supported grant type")
         }
     }
-    
+
     private func ensureIssuerTrust(
         _ rawMetadata: [String: Any],
         onCheck: ((_ issuerMetadata: [String: Any]) async throws -> Bool)?
