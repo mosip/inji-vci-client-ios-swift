@@ -1,6 +1,13 @@
 import Foundation
 
 class CredentialRequestExecutor {
+    
+    private let factory: CredentialRequestFactoryProtocol
+
+        init(factory: CredentialRequestFactoryProtocol = CredentialRequestFactory()) {
+            self.factory = factory
+        }
+    
     private var logTag: String {
            Util.getLogTag(className: String(describing: type(of: self)))
        }
@@ -13,7 +20,7 @@ class CredentialRequestExecutor {
         session: NetworkManager = NetworkManager.shared
     ) async throws -> CredentialResponse? {
         do {
-            var request = try CredentialRequestFactory().createCredentialRequest(
+            var request = try factory.createCredentialRequest(
                 credentialFormat: issuerMetadata.credentialFormat,
                 accessToken: accessToken,
                 issuer: issuerMetadata,
