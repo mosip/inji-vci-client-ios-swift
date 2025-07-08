@@ -1,6 +1,6 @@
 import Foundation
 
-final class IssuerMetadataService {
+ class IssuerMetadataService {
     private let session: NetworkManager
     private let timeoutMillis: Int64
 

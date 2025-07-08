@@ -132,7 +132,10 @@ final class MockNetworkManager: NetworkManager {
     var shouldThrowNetworkError: Bool = false
     var simulateDelay: TimeInterval = 0
     var capturedParams: [String: String] = [:]
-
+    var responseHeaders: [AnyHashable: Any]? = nil
+    var shouldThrowTimeout: Bool = false
+    var capturedUrlRequest: URLRequest?
+    
     override func sendRequest(
         url: String,
         method: HttpMethod,
@@ -151,6 +154,27 @@ final class MockNetworkManager: NetworkManager {
         capturedParams = bodyParams ?? [:]
         return NetworkResponse(body: responseBody, headers: nil)
     }
+    
+    override func sendRequest(request: URLRequest) async throws -> NetworkResponse {
+        if simulateDelay > 0 {
+            try await Task.sleep(nanoseconds: UInt64(simulateDelay * 1_000_000_000))
+        }
+
+        if shouldThrowTimeout {
+            throw NetworkRequestTimeoutException("Simulated timeout")
+        }
+        if shouldThrowNetworkError {
+            throw DownloadFailedException("Simulated network failure")
+        }
+
+        capturedUrlRequest = request
+
+        return NetworkResponse(
+            body: responseBody,
+            headers: responseHeaders
+        )
+    }   
+        
 }
 
 final class MockAuthServerDiscoveryService: AuthServerDiscoveryService {
@@ -184,3 +208,136 @@ final class MockPKCESessionManager: PKCESessionManager {
         )
     }
 }
+
+class MockValidCredentialRequest: CredentialRequestProtocol {
+    required init(accessToken: String, issuerMetaData: IssuerMetadata, proof: JWTProof) {
+    }
+
+    func validateIssuerMetadata() -> ValidatorResult {
+        return ValidatorResult(isValid: true)
+    }
+
+    func constructRequest() throws -> URLRequest {
+        return URLRequest(url: URL(string: "https://example.com")!)
+    }
+}
+
+class MockInvalidCredentialRequest: CredentialRequestProtocol {
+    required init(accessToken: String, issuerMetaData: IssuerMetadata, proof: JWTProof) {
+    }
+
+    func validateIssuerMetadata() -> ValidatorResult {
+        let result = ValidatorResult(isValid: false)
+        result.invalidFields = ["field1", "field2"]
+        return result
+    }
+
+    func constructRequest() throws -> URLRequest {
+        throw NSError(domain: "", code: -1)
+    }
+}
+
+// MARK: - Helpers
+
+func mockIssuerMetadata() -> IssuerMetadata {
+    return IssuerMetadata(
+        credentialAudience: "",
+        credentialEndpoint: "",
+        credentialType: [],
+        context: nil, credentialFormat: CredentialFormat.ldp_vc,
+        doctype: "",
+        claims: [:],
+        authorizationServers: nil,
+        tokenEndpoint: nil,
+        scope: ""
+    )
+}
+
+func mockProof() -> Proof {
+    return JWTProof(jwt: "")
+}
+
+// MARK: - Subclassed Factory to Inject Mocks
+
+class TestableCredentialRequestFactory: CredentialRequestFactory {
+    var credentialRequestToReturn: CredentialRequestProtocol!
+
+    override func validateAndConstructCredentialRequest(credentialRequest: CredentialRequestProtocol) throws -> URLRequest {
+        let validationResult = credentialRequestToReturn.validateIssuerMetadata()
+        if validationResult.isValid {
+            return try credentialRequestToReturn.constructRequest()
+        } else {
+            throw InvalidDataProvidedException("invalid fields: \(validationResult.invalidFields.joined(separator: ", "))")
+        }
+    }
+}
+final class MockAuthorizationCodeFlowService: AuthorizationCodeFlowService {
+    var didCallRequestCredentials = false
+    var shouldThrow = false
+    var responseToReturn: CredentialResponse?
+
+    override func requestCredentials(
+        issuerMetadataResult: IssuerMetadataResult,
+        clientMetadata: ClientMetaData,
+        credentialOffer: CredentialOffer? = nil,
+        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
+        getProofJwt: @escaping (
+            _ accessToken: String,
+            _ cNonce: String?,
+            _ issuerMetadata: [String: Any]?,
+            _ credentialConfigurationId: String?
+        ) async throws -> String,
+        credentialConfigurationId: String? = nil,
+        downloadTimeOutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
+        session: NetworkManager = NetworkManager.shared
+    ) async throws -> CredentialResponse {
+        didCallRequestCredentials = true
+        if shouldThrow {
+            throw VCIClientException(code: "VCI-009", message: "Simulated error")
+        }
+        return responseToReturn!
+    }
+}
+final class MockCredentialOfferService: CredentialOfferService {
+    var offerToReturn: CredentialOffer!
+
+    override func fetchCredentialOffer(_ offer: String) async throws -> CredentialOffer {
+        return offerToReturn
+    }
+}
+
+final class MockIssuerMetadataService: IssuerMetadataService {
+    var resultToReturn: IssuerMetadataResult!
+
+    override func fetch(
+        issuerUrl: String,
+        credentialConfigurationId: String
+    ) async throws -> IssuerMetadataResult {
+        return resultToReturn
+    }
+}
+
+final class MockPreAuthFlowService: PreAuthFlowService {
+    var didCallRequest = false
+    var responseToReturn: CredentialResponse!
+
+    override func requestCredentials(
+        issuerMetadataResult: IssuerMetadataResult,
+        offer: CredentialOffer,
+        getTxCode: ((_ inputMode: String?, _ description: String?, _ _length: Int?) async throws -> String)? = nil,
+        getProofJwt: @escaping (
+            _ accessToken: String,
+            _ cNonce: String?,
+            _ issuerMetadata: [String: Any],
+            _ credentialConfigurationId: String
+        ) async throws -> String,
+        credentialConfigurationId: String,
+        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
+    ) async throws -> CredentialResponse {
+        didCallRequest = true
+        return responseToReturn
+    }
+}
+
+
+
