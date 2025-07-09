@@ -29,7 +29,7 @@ It supports both **Credential Offer** and **Trusted Issuer** flows, with secure 
 Add VCIClient to your Swift Package Manager dependencies:
 
 ```swift
-.package(url: "https://github.com/mosip/inji-vci-client-ios", from: "0.3.0")
+.package(url: "https://github.com/mosip/inji-vci-client-ios", from: "0.4.0")
 ```
 
 ##  API Overview
@@ -37,11 +37,27 @@ Add VCIClient to your Swift Package Manager dependencies:
 ### 1. Request Credential using Credential Offer
 
 ```swift
+    public func requestCredentialByCredentialOffer(
+        credentialOffer: String,
+        clientMetadata: ClientMetaData,
+        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)? = nil,
+        getProofJwt: @escaping (
+            _ accessToken: String,
+            _ cNonce: String?,
+            _ issuerMetadata: [String: Any]?,
+            _ credentialConfigurationId: String?
+        ) async throws -> String,
+        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
+        onCheckIssuerTrust: ((_ issuerMetadata: [String: Any]) async throws -> Bool)? = nil,
+        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
+    ) async throws -> CredentialResponse?
+```
+#### Example Use
+```swift
 let credential = try await VCIClient(traceabilityId: "MyApp").requestCredentialByCredentialOffer(
     credentialOffer: offerString,
     clientMetadata: ClientMetaData(clientId: "...", redirectUri: "..."),
     getTxCode: {
-        //for pre-auth (optional)
         return "user-entered-tx-code"
     },
     getProofJwt: { accessToken, cNonce, issuerMeta, credentialConfigurationId in
@@ -59,24 +75,48 @@ let credential = try await VCIClient(traceabilityId: "MyApp").requestCredentialB
 
 ### 2. Request Credential from Trusted Issuer
 
-```kotlin
-val response = VCIClient(traceabilityId).requestCredentialFromTrustedIssuer(
-    IssuerMetadata = metadata,
-    clientMetadata = ClientMetadata(clientId, redirectUri),
-    getProofJwt = { accessToken, cNonce?, issuerMeta?, configId? -> ... },
-    getAuthCode = { authorizationEndpoint -> ... }
+```swift
+    public func requestCredentialFromTrustedIssuer(
+        issuerMetadata: IssuerMetadata,
+        clientMetadata: ClientMetaData,
+        getProofJwt: @escaping (
+            _ accessToken: String,
+            _ cNonce: String?,
+            _ issuerMetadata: [String: Any]?,
+            _ credentialConfigurationId: String?
+        ) async throws -> String,
+        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
+        downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
+    ) async throws -> CredentialResponse?
+```
+#### Example Use
+```swift
+let response = try await VCIClient(traceabilityId: "MyApp").requestCredentialFromTrustedIssuer(
+    issuerMetadata: metadata,
+    clientMetadata: ClientMetaData(clientId: "...", redirectUri: "..."),
+    getProofJwt: { accessToken, cNonce, issuerMeta, configId in
+        return try await createProofJwt(
+            accessToken: accessToken,
+            cNonce: cNonce,
+            issuerMetadata: issuerMeta
+        )
+    },
+    getAuthCode: { authorizationEndpoint in
+        return try await startAuthorizationFlow(url: authorizationEndpoint)
+    }
 )
+
 ```
 
 #### 🔹 Parameters:
 
 | Param             | Type          | Description                                                                 |
 |------------------|---------------|-----------------------------------------------------------------------------|
-| `credentialOffer` | `String`      | Offer as embedded JSON or `credential_offer_uri`                           |
+| `credentialOffer` | `String`      | Offer as embedded JSON string or credentialOffer URI                          |
 | `clientMetadata`  | `ClientMetadata` | Contains client ID and redirect URI                                         |
 | `IssuerMetadata`  | `IssuerMetadata` | Contains Issuer metadata details required for credential request                                         |
-| `getTxCode`       | `() -> String` | Optional callback function for TX Code (for Pre-Auth flows)                        |
-| `getProofJwt`     | `(String, String?, [String,Any],String -> String` | Callback function to prepare proof-jwt for credential request |
+| `getTxCode`       | `(String?,String?,Int?) -> String` | Optional callback function for TX Code (for Pre-Auth flows)                        |
+| `getProofJwt`     | `(String, String?, [String:Any]?,String?) -> String` | Callback function to prepare proof-jwt for credential request |
 | `getAuthCode`     | `(String) -> String` | Handles authorization and returns the code (for Authorization flows)         |
 | `onCheckIssuerTrust`     | `(([String: Any]) -> Bool)?` | Optional parameter to implement user-trust based credential download from issuer         |
 
@@ -114,6 +154,29 @@ let metadata = IssuerMetadata(
 
 ```
 
+### 4. ClientMetaData
+
+```swift
+public struct ClientMetaData {
+    public let clientId: String
+    public let redirectUri: String
+}
+```
+
+### 5. ⚠️ Deprecated: Legacy Credential Request
+
+This method is **deprecated** as of v0.4.0.  
+Please use `requestCredentialByCredentialOffer` or `requestCredentialFromTrustedIssuer` instead.
+
+```swift
+@available(*, deprecated, message: "This method is deprecated as per the new VCI Client library contract. Use requestCredentialByCredentialOffer() or requestCredentialFromTrustedIssuer()")
+public func requestCredential(
+    issuerMeta: IssuerMeta,
+    proof: Proof,
+    accessToken: String
+) async throws -> CredentialResponse?
+```
+
 ---
 
 ##  Security Support
@@ -148,14 +211,35 @@ They carry structured error codes like `VCI-001`, `VCI-002` etc., to help consum
 
 Mock-based tests are available covering:
 
-- Credential download flow (offer + trusted issuer)
+- Credential download flow (credential offer + trusted issuer)
 - Proof JWT signing callbacks
 - Token exchange and CNonce logic
 
 > See `VCIClientTest` for full coverage
 
+---
+
+## Platform Support
+
+- **Swift:** 5.7+
+- **iOS:** 13.0+
 
 Architecture decisions are noted as ADRs [here](https://github.com/mosip/inji-vci-client/tree/master/doc).
 
-Node: The android library is available [here](https://github.com/mosip/inji-vci-client)
+Note: The android library is available [here](https://github.com/mosip/inji-vci-client)
 
+---
+
+## Example App
+
+A complete sample app demonstrating credential issuance flows, proof JWT signing, and error handling with `VCIClient` is available here:
+
+[👉 Example iOS App Repository](https://github.com/mosip/inji-vci-client-ios-swift/tree/release-0.4.x/SwiftExample)
+
+- Shows both **Credential Offer** and **Trusted Issuer** flows
+- Includes best practices for callbacks and UI integration
+- Can be built and run on iOS device only
+
+> Use the example app to quickly get started and see the library in action.
+
+---
