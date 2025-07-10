@@ -7,7 +7,7 @@ final class CredentialOfferExtensionTests: XCTestCase {
         let offer = CredentialOffer(credentialIssuer: "test",
                                     credentialConfigurationIds: ["test_id"],
                                     grants: CredentialOfferGrants(
-                                        preAuthorizedGrant: PreAuthorizedCodeGrant(preAuthorizedCode: "test-123", txCode: nil, authorizationServer: nil, interval: nil),
+                                        preAuthorizedGrant: PreAuthCodeGrant(preAuthCode: "test-123", txCode: nil, authorizationServer: nil, interval: nil),
                                         authorizationCodeGrant: nil
                                     ))
 

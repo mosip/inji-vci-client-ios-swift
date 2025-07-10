@@ -1,7 +1,7 @@
 import Foundation
 
-class AuthServerDiscoveryService {
-    func discover(baseUrl: String) async throws -> AuthServerMetadata {
+class AuthorizationServerDiscoveryService {
+    func discover(baseUrl: String) async throws -> AuthorizationServerMetadata {
         let oauthUrl = "\(baseUrl)/.well-known/oauth-authorization-server"
         let openidUrl = "\(baseUrl)/.well-known/openid-configuration"
         let timeout = Constants.defaultNetworkTimeoutInMillis
@@ -15,7 +15,7 @@ class AuthServerDiscoveryService {
             )
 
             if !oauthResponse.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-               let metadata = try JsonUtils.deserialize(oauthResponse.body, as: AuthServerMetadata.self) {
+               let metadata = try JsonUtils.deserialize(oauthResponse.body, as: AuthorizationServerMetadata.self) {
                 return metadata
             }
         } catch {
@@ -31,13 +31,13 @@ class AuthServerDiscoveryService {
             )
 
             if !openidResponse.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-               let metadata = try JsonUtils.deserialize(openidResponse.body, as: AuthServerMetadata.self) {
+               let metadata = try JsonUtils.deserialize(openidResponse.body, as: AuthorizationServerMetadata.self) {
                 return metadata
             }
         } catch {
             print("OpenID discovery also failed: \(error.localizedDescription)")
         }
 
-        throw AuthServerDiscoveryException("Failed to discover authorization server metadata at both endpoints.")
+        throw AutorizationServerDiscoveryException("Failed to discover authorization server metadata at both endpoints.")
     }
 }

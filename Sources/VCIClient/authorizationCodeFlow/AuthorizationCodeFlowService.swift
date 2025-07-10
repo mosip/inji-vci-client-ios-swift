@@ -1,68 +1,59 @@
 import Foundation
 
- class AuthorizationCodeFlowService {
-    private let authServerResolver: AuthServerResolver
+class AuthorizationCodeFlowService {
+    private let authServerResolver: AuthorizationServerResolver
     private let tokenService: TokenService
-    private let credentialExecutor: CredentialRequestExecutor
+    private let credentialRequestExecutor: CredentialRequestExecutor
     private let pkceSessionManager: PKCESessionManager
 
     init(
-        authServerResolver: AuthServerResolver = AuthServerResolver(),
+        authServerResolver: AuthorizationServerResolver = AuthorizationServerResolver(),
         tokenService: TokenService = TokenService(),
         credentialExecutor: CredentialRequestExecutor = CredentialRequestExecutor(),
         pkceSessionManager: PKCESessionManager = PKCESessionManager()
     ) {
         self.authServerResolver = authServerResolver
         self.tokenService = tokenService
-        self.credentialExecutor = credentialExecutor
+        self.credentialRequestExecutor = credentialExecutor
         self.pkceSessionManager = pkceSessionManager
     }
 
     func requestCredentials(
-        issuerMetadataResult: IssuerMetadataResult,
-        clientMetadata: ClientMetaData,
+        issuerMetadata: IssuerMetadata,
+        clientMetadata: ClientMetadata,
+        authorizeUser: @escaping AuthorizeUserCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
+        getProofJwt: @escaping ProofJwtCallback,
+        credentialConfigurationId: String,
+        proofSigningAlgorithmsSupportedSupported: [String],
         credentialOffer: CredentialOffer? = nil,
-        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
-        getProofJwt: @escaping (
-            _ accessToken: String,
-            _ cNonce: String?,
-            _ issuerMetadata: [String: Any]?,
-            _ credentialConfigurationId: String?
-        ) async throws -> String,
-        credentialConfigurationId: String? = nil,
         downloadTimeOutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
         session: NetworkManager = NetworkManager.shared
     ) async throws -> CredentialResponse {
         do {
             let pkceSession = pkceSessionManager.createSession()
 
-            let authServerMetadata = try await {
-                if let offer = credentialOffer {
-                    return try await authServerResolver.resolveForAuthCode(issuerMetadata: issuerMetadataResult.issuerMetadata, credentialOffer: offer)
-                } else {
-                    return try await authServerResolver.resolveForAuthCode(issuerMetadata: issuerMetadataResult.issuerMetadata)
-                }
-            }()
+            let authServerMetadata = try await authServerResolver.resolveForAuthCode(issuerMetadata: issuerMetadata, credentialOffer: credentialOffer)
 
             let token = try await performAuthorizationAndGetToken(
                 authServerMetadata: authServerMetadata,
-                issuerMetadata: issuerMetadataResult.issuerMetadata,
+                issuerMetadata: issuerMetadata,
                 clientMetadata: clientMetadata,
-                getAuthCode: getAuthCode,
-                pkceSession: pkceSession
+                authorizeUser: authorizeUser,
+                pkceSession: pkceSession,
+                getTokenResponse: getTokenResponse
             )
 
             let jwt = try await getProofJwt(
-                token.accessToken,
+                issuerMetadata.credentialIssuer,
                 token.cNonce,
-                issuerMetadataResult.raw as [String : Any],
-                credentialConfigurationId
+                proofSigningAlgorithmsSupportedSupported
             )
 
             let proof = JWTProof(jwt: jwt)
 
-            guard let response = try await credentialExecutor.requestCredential(
-                issuerMetadata: issuerMetadataResult.issuerMetadata,
+            guard let response = try await credentialRequestExecutor.requestCredential(
+                issuerMetadata: issuerMetadata, credentialConfigurationId: credentialConfigurationId,
                 proof: proof,
                 accessToken: token.accessToken,
                 timeoutInMillis: downloadTimeOutInMillis,
@@ -79,11 +70,12 @@ import Foundation
     }
 
     private func performAuthorizationAndGetToken(
-        authServerMetadata: AuthServerMetadata,
+        authServerMetadata: AuthorizationServerMetadata,
         issuerMetadata: IssuerMetadata,
-        clientMetadata: ClientMetaData,
-        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
-        pkceSession: PKCESessionManager.PKCESession
+        clientMetadata: ClientMetadata,
+        authorizeUser: @escaping AuthorizeUserCallback,
+        pkceSession: PKCESessionManager.PKCESession,
+        getTokenResponse: @escaping TokenResponseCallback
     ) async throws -> TokenResponse {
         guard let authorizationEndpoint = authServerMetadata.authorizationEndpoint else {
             throw DownloadFailedException("Missing authorization endpoint")
@@ -103,9 +95,10 @@ import Foundation
             nonce: pkceSession.nonce
         )
 
-        let authCode = try await getAuthCode(authUrl)
+        let authCode = try await authorizeUser(authUrl)
 
         return try await tokenService.getAccessToken(
+            getTokenResponse: getTokenResponse,
             tokenEndpoint: tokenEndpoint,
             authCode: authCode,
             clientId: clientMetadata.clientId,

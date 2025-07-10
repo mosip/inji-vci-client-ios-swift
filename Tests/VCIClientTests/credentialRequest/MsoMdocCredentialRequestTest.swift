@@ -5,7 +5,7 @@ final class MsoMdocCredentialRequestTest: XCTestCase {
     var credentialRequest: MsoMdocVcCredentialRequest!
     let url = URL(string: "https://domain.net/credential")!
     let accessToken = "AccessToken"
-    let issuer = IssuerMetadata(credentialAudience: "https://domain.net",
+    let issuer = IssuerMetadata(credentialIssuer: "https://domain.net",
                                 credentialEndpoint: "https://domain.net/credential",
                                 credentialFormat: .mso_mdoc,
                                 doctype: "org.iso.18013.5.1.mDL"
@@ -45,7 +45,7 @@ final class MsoMdocCredentialRequestTest: XCTestCase {
     }
 
     func testshouldReturnValidatorResultWithIsValidAsFalseWithInvalidFieldsWhenRequiredDocTypeIsNotAvailableInIssuerMetadata() {
-        let issuerMetadataWithoutDocType = IssuerMetadata(credentialAudience: "https://domain.net",
+        let issuerMetadataWithoutDocType = IssuerMetadata(credentialIssuer: "https://domain.net",
                                                           credentialEndpoint: "https://domain.net/credential",
                                                           credentialFormat: .mso_mdoc)
         credentialRequest = MsoMdocVcCredentialRequest(accessToken: accessToken, issuerMetaData: issuerMetadataWithoutDocType, proof: proofJWT)

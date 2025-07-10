@@ -3,11 +3,11 @@
 import XCTest
 final class PreAuthFlowServiceTests: XCTestCase {
     func makeService(
-        resolver: AuthServerResolver = MockAuthServerResolver(),
+        resolver: AuthorizationServerResolver = MockAuthServerResolver(),
         tokenService: TokenService = MockTokenService(),
         executor: CredentialRequestExecutor = MockCredentialRequestExecutor()
-    ) -> PreAuthFlowService {
-        return PreAuthFlowService(
+    ) -> PreAuthCodeFlowService {
+        return PreAuthCodeFlowService(
             authServerResolver: resolver,
             tokenService: tokenService,
             credentialExecutor: executor
@@ -17,16 +17,18 @@ final class PreAuthFlowServiceTests: XCTestCase {
     func test_requestCredentials_success() async throws {
         let service = makeService()
 
-        let issuerMetadata = IssuerMetadata.mock()
+        _ = IssuerMetadata.mock()
         let offer = CredentialOffer.mockWithTxCodeRequired()
         let rawMetadata = ["key": "value"]
 
         let result = try await service.requestCredentials(
-            issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata.mock(), raw: rawMetadata),
-            offer: offer,
-            getTxCode: { _, _, _ in "tx123" },
-            getProofJwt: { _, _, _, _ in "jwt-mock" },
-            credentialConfigurationId: "vc1"
+            issuerMetadata: IssuerMetadata.mock(),
+            credentialOffer: offer,
+            getTokenResponse:{_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+            getProofJwt: { _, _, _ in "jwt-mock" },
+            credentialConfigurationId: "mock-id",
+            proofSigningAlgorithmsSupportedSupported: [],
+            getTxCode: { _, _, _ in "tx123" }
         )
 
         XCTAssertEqual(result.credential.value as? String, "mock-credential")
@@ -40,10 +42,13 @@ final class PreAuthFlowServiceTests: XCTestCase {
 
         do {
             _ = try await service.requestCredentials(
-                issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata.mock(), raw: [:]),
-                offer: CredentialOffer.mock(),
-                getProofJwt: { _, _, _, _ in "jwt" },
-                credentialConfigurationId: "vc1"
+                issuerMetadata: IssuerMetadata.mock(),
+                credentialOffer: CredentialOffer(credentialIssuer: "mock", credentialConfigurationIds: ["mock-id"], grants: nil),
+                getTokenResponse:{_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "jwt-mock" },
+                credentialConfigurationId: "mock-id",
+                proofSigningAlgorithmsSupportedSupported: [],
+                getTxCode: { _, _, _ in "tx123" }
             )
             XCTFail("Expected failure due to missing token endpoint")
         } catch {
@@ -56,11 +61,12 @@ final class PreAuthFlowServiceTests: XCTestCase {
 
         do {
             _ = try await service.requestCredentials(
-                issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata.mock(), raw: [:]),
-                offer: CredentialOffer.mockWithTxCodeRequired(),
-                getTxCode: nil,
-                getProofJwt: { _, _, _, _ in "jwt" },
-                credentialConfigurationId: "vc1"
+                issuerMetadata: IssuerMetadata.mock(),
+                credentialOffer: CredentialOffer(credentialIssuer: "mock", credentialConfigurationIds: ["mock-id"], grants: CredentialOfferGrants(preAuthorizedGrant: PreAuthCodeGrant(preAuthCode: "mock-pre-auth", txCode: TxCode(inputMode: nil, length: 2, description: nil), authorizationServer: nil, interval: nil), authorizationCodeGrant: nil)),
+                getTokenResponse:{_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "jwt-mock" },
+                credentialConfigurationId: "mock-id",
+                proofSigningAlgorithmsSupportedSupported: []
             )
             XCTFail("Expected failure due to missing tx_code provider")
         } catch {
@@ -71,16 +77,20 @@ final class PreAuthFlowServiceTests: XCTestCase {
     func test_requestCredentials_missingGrant_shouldThrow() async {
         let service = makeService()
 
-        let offer = CredentialOffer.mockWithoutGrant()
+        _ = CredentialOffer.mockWithoutGrant()
 
         do {
-            _ = try await service.requestCredentials(
-                issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata.mock(), raw: [:]),
-                offer: offer,
-                getProofJwt: { _, _, _, _ in "jwt" },
-
-                credentialConfigurationId: "vc1"
-            )
+            _ =
+                try await service.requestCredentials(
+                    issuerMetadata: IssuerMetadata.mock(),
+                    credentialOffer: CredentialOffer(credentialIssuer: "mock", credentialConfigurationIds: ["mock-id"], grants: nil),
+                    getTokenResponse:{_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+                    getProofJwt: { _, _, _ in "jwt-mock" },
+                    credentialConfigurationId: "mock-id",
+                    proofSigningAlgorithmsSupportedSupported: [],
+                    getTxCode: { _, _, _ in "tx123" }
+                )
+            
             XCTFail("Expected failure due to missing grant")
         } catch {
             XCTAssertTrue(error.localizedDescription.contains("Missing pre-authorized grant details"))
@@ -93,10 +103,13 @@ final class PreAuthFlowServiceTests: XCTestCase {
 
         do {
             _ = try await service.requestCredentials(
-                issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata.mock(), raw: [:]),
-                offer: CredentialOffer.mock(),
-                getProofJwt: { _, _, _, _ in "jwt" },
-                credentialConfigurationId: "vc1"
+                issuerMetadata: IssuerMetadata.mock(),
+                credentialOffer: CredentialOffer(credentialIssuer: "mock", credentialConfigurationIds: ["mock-id"], grants:CredentialOfferGrants(preAuthorizedGrant: PreAuthCodeGrant(preAuthCode: "mock", txCode: nil, authorizationServer: nil, interval: nil), authorizationCodeGrant: nil)),
+                getTokenResponse:{_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "jwt-mock" },
+                credentialConfigurationId: "mock-id",
+                proofSigningAlgorithmsSupportedSupported: [],
+                getTxCode: { _, _, _ in "tx123" }
             )
             XCTFail("Expected failure due to credential download returning nil")
         } catch {

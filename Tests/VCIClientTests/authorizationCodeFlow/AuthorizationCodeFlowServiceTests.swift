@@ -3,7 +3,7 @@
 import XCTest
 final class AuthorizationCodeFlowServiceTests: XCTestCase {
     func makeService(
-        resolver: AuthServerResolver = MockAuthServerResolver(),
+        resolver: AuthorizationServerResolver = MockAuthServerResolver(),
         tokenService: TokenService = MockTokenService(),
         executor: CredentialRequestExecutor = MockCredentialRequestExecutor(),
         pkceManager: PKCESessionManager = MockPKCESessionManager()
@@ -20,11 +20,13 @@ final class AuthorizationCodeFlowServiceTests: XCTestCase {
         let service = makeService()
 
         let result = try await service.requestCredentials(
-            issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata.mock(), raw: [:]),
-            clientMetadata: ClientMetaData(clientId: "client123", redirectUri: "app://redirect"),
-            getAuthCode: { _ in "auth-code" },
-            getProofJwt: { _, _, _, _ in "mock-jwt" },
-            credentialConfigurationId: "vc1"
+            issuerMetadata: IssuerMetadata.mock(),
+            clientMetadata: ClientMetadata(clientId: "client123", redirectUri: "app://redirect"),
+            authorizeUser: { _ in "auth-code" },
+            getTokenResponse: {_ in TokenResponse(accessToken: "mock-token", tokenType: "Bearer")},
+            getProofJwt: { _, _, _ in "mock-jwt" },
+            credentialConfigurationId: "vc1",
+            proofSigningAlgorithmsSupportedSupported: ["rs256"]
         )
 
         XCTAssertEqual(result.credential.value as? String, "mock-credential")
@@ -37,11 +39,14 @@ final class AuthorizationCodeFlowServiceTests: XCTestCase {
         let service = makeService(resolver: resolver)
 
         do {
-            _ = try await service.requestCredentials(
-                issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata.mock(), raw: [:]),
-                clientMetadata: ClientMetaData(clientId: "client", redirectUri: "uri"),
-                getAuthCode: { _ in "code" },
-                getProofJwt: { _, _, _, _ in "jwt" }
+            let result = try await service.requestCredentials(
+                issuerMetadata: IssuerMetadata.mock(),
+                clientMetadata: ClientMetadata(clientId: "client123", redirectUri: "app://redirect"),
+                authorizeUser: { _ in "auth-code" },
+                getTokenResponse: {_ in TokenResponse(accessToken: "mock-token", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "mock-jwt" },
+                credentialConfigurationId: "vc1",
+                proofSigningAlgorithmsSupportedSupported: ["rs256"]
             )
             XCTFail("Expected to throw due to missing authorization endpoint")
         } catch {
@@ -56,11 +61,14 @@ final class AuthorizationCodeFlowServiceTests: XCTestCase {
         let service = makeService(resolver: resolver)
 
         do {
-            _ = try await service.requestCredentials(
-                issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata(credentialAudience: "", credentialEndpoint: "", credentialFormat: .mso_mdoc, doctype: "d", claims: nil, authorizationServers: nil), raw: [:]),
-                clientMetadata: ClientMetaData(clientId: "c", redirectUri: "r"),
-                getAuthCode: { _ in "auth" },
-                getProofJwt: { _, _, _, _ in "jwt" }
+            let result = try await service.requestCredentials(
+                issuerMetadata: IssuerMetadata.mock(),
+                clientMetadata: ClientMetadata(clientId: "client123", redirectUri: "app://redirect"),
+                authorizeUser: { _ in "auth-code" },
+                getTokenResponse: {_ in TokenResponse(accessToken: "mock-token", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "mock-jwt" },
+                credentialConfigurationId: "vc1",
+                proofSigningAlgorithmsSupportedSupported: ["rs256"]
             )
             XCTFail("Expected to throw due to missing token endpoint")
         } catch {
@@ -73,11 +81,14 @@ final class AuthorizationCodeFlowServiceTests: XCTestCase {
         let service = makeService(executor: executor)
 
         do {
-            _ = try await service.requestCredentials(
-                issuerMetadataResult: IssuerMetadataResult(issuerMetadata: IssuerMetadata.mock(), raw: [:]),
-                clientMetadata: ClientMetaData(clientId: "x", redirectUri: "y"),
-                getAuthCode: { _ in "auth" },
-                getProofJwt: { _, _, _, _ in "jwt" }
+            let result = try await service.requestCredentials(
+                issuerMetadata: IssuerMetadata.mock(),
+                clientMetadata: ClientMetadata(clientId: "client123", redirectUri: "app://redirect"),
+                authorizeUser: { _ in "auth-code" },
+                getTokenResponse: {_ in TokenResponse(accessToken: "mock-token", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "mock-jwt" },
+                credentialConfigurationId: "vc1",
+                proofSigningAlgorithmsSupportedSupported: ["rs256"]
             )
             XCTFail("Expected to throw due to nil credential response")
         } catch {
