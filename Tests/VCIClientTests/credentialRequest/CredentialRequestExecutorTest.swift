@@ -65,6 +65,7 @@ final class CredentialRequestExecutorTests: XCTestCase {
         let executor = CredentialRequestExecutor(factory: factory)
         let result = try await executor.requestCredential(
             issuerMetadata: mockIssuerMetadata(),
+            credentialConfigurationId: "mock",
             proof: mockProof(),
             accessToken: "token",
             timeoutInMillis: 10000,
@@ -85,6 +86,7 @@ final class CredentialRequestExecutorTests: XCTestCase {
             do {
                 _ = try await executor.requestCredential(
                     issuerMetadata: mockIssuerMetadata(),
+                    credentialConfigurationId: "mock",
                     proof: mockProof(),
                     accessToken: "token"
                 )
@@ -105,6 +107,7 @@ final class CredentialRequestExecutorTests: XCTestCase {
             do {
                 _ = try await executor.requestCredential(
                     issuerMetadata: mockIssuerMetadata(),
+                    credentialConfigurationId: "mock",
                     proof: mockProof(),
                     accessToken: "token",
                     session: networkManager
@@ -126,6 +129,7 @@ final class CredentialRequestExecutorTests: XCTestCase {
             do {
                 _ = try await executor.requestCredential(
                     issuerMetadata: mockIssuerMetadata(),
+                    credentialConfigurationId: "mock",
                     proof: mockProof(),
                     accessToken: "token",
                     session: networkManager
@@ -147,6 +151,7 @@ final class CredentialRequestExecutorTests: XCTestCase {
             do {
                 _ = try await executor.requestCredential(
                     issuerMetadata: mockIssuerMetadata(),
+                    credentialConfigurationId: "mock",
                     proof: mockProof(),
                     accessToken: "token",
                     session: networkManager
@@ -173,6 +178,7 @@ final class CredentialRequestExecutorTests: XCTestCase {
             do {
                 _ = try await executor.requestCredential(
                     issuerMetadata: mockIssuerMetadata(),
+                    credentialConfigurationId: "mock",
                     proof: mockProof(),
                     accessToken: "token",
                     session: networkManager

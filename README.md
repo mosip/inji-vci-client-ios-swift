@@ -39,16 +39,12 @@ Add VCIClient to your Swift Package Manager dependencies:
 ```swift
     public func requestCredentialByCredentialOffer(
         credentialOffer: String,
-        clientMetadata: ClientMetaData,
-        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)? = nil,
-        getProofJwt: @escaping (
-            _ accessToken: String,
-            _ cNonce: String?,
-            _ issuerMetadata: [String: Any]?,
-            _ credentialConfigurationId: String?
-        ) async throws -> String,
-        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
-        onCheckIssuerTrust: ((_ issuerMetadata: [String: Any]) async throws -> Bool)? = nil,
+        clientMetadata: ClientMetadata,
+        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)?,
+        authorizeUser: @escaping AuthorizeUserCallback,
+        getTokenResponse: @escaping TokenresponseCallback,
+        getProofJwt:ProofJwtCallback,
+        onCheckIssuerTrust: CheckIssuerTrustCallback = nil,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse?
 ```
@@ -60,14 +56,17 @@ let credential = try await VCIClient(traceabilityId: "MyApp").requestCredentialB
     getTxCode: {
         return "user-entered-tx-code"
     },
-    getProofJwt: { accessToken, cNonce, issuerMeta, credentialConfigurationId in
-        return try await createProofJwt(accessToken: accessToken, cNonce: cNonce, issuerMetadata: issuerMeta)
+    authorizeUser: { authorizationUrl in
+        return try await startAuthorizationFlow(url: authorizationUrl)
     },
-    getAuthCode: { authorizationEndpoint in
-        return try await startAuthorizationFlow(url: authorizationEndpoint)
-    }
-    onCheckIssuerTrust: { issuerMetadata in
-        return try await CheckIssuerTrust(issuerMetadata: issuerMetadata)
+    getTokenResponse: { tokenRequest in 
+        return TokenResponse(...)
+    },
+    getProofJwt: { credentialIssuer, cNonce, proofSigningAlgorithmsSupportedSupported in
+        return try await createProofJwt(...)
+    },
+    onCheckIssuerTrust: { credentialIssuer, issuerDisplay in
+        return try await CheckIssuerTrust(...)
     }
 )
 
@@ -77,32 +76,29 @@ let credential = try await VCIClient(traceabilityId: "MyApp").requestCredentialB
 
 ```swift
     public func requestCredentialFromTrustedIssuer(
-        issuerMetadata: IssuerMetadata,
-        clientMetadata: ClientMetaData,
-        getProofJwt: @escaping (
-            _ accessToken: String,
-            _ cNonce: String?,
-            _ issuerMetadata: [String: Any]?,
-            _ credentialConfigurationId: String?
-        ) async throws -> String,
-        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
+        credentialIssuer: String,
+        credentialConfigurationId: String,
+        clientMetadata: ClientMetadata,
+        authorizeUser: @escaping AuthorizeUserCallback,
+        getTokenResponse: @escaping TokenresponseCallback,
+        getProofJwt:ProofJwtCallback,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse?
 ```
 #### Example Use
 ```swift
 let response = try await VCIClient(traceabilityId: "MyApp").requestCredentialFromTrustedIssuer(
-    issuerMetadata: metadata,
+    credentialIssuer: "issuer",
+    credentialConfigurationId: "...",
     clientMetadata: ClientMetaData(clientId: "...", redirectUri: "..."),
-    getProofJwt: { accessToken, cNonce, issuerMeta, configId in
-        return try await createProofJwt(
-            accessToken: accessToken,
-            cNonce: cNonce,
-            issuerMetadata: issuerMeta
-        )
+    authorizeUser: { authorizationUrl in
+        return try await startAuthorizationFlow(url: authorizationUrl)
     },
-    getAuthCode: { authorizationEndpoint in
-        return try await startAuthorizationFlow(url: authorizationEndpoint)
+    getTokenResponse: { tokenRequest in 
+        return TokenResponse(...)
+    },
+    getProofJwt: { credentialIssuer, cNonce, proofSigningAlgorithmsSupportedSupported in
+        return try await createProofJwt(...)
     }
 )
 
@@ -114,47 +110,14 @@ let response = try await VCIClient(traceabilityId: "MyApp").requestCredentialFro
 |------------------|---------------|-----------------------------------------------------------------------------|
 | `credentialOffer` | `String`      | Offer as embedded JSON string or credentialOffer URI                          |
 | `clientMetadata`  | `ClientMetadata` | Contains client ID and redirect URI                                         |
-| `IssuerMetadata`  | `IssuerMetadata` | Contains Issuer metadata details required for credential request                                         |
 | `getTxCode`       | `(String?,String?,Int?) -> String` | Optional callback function for TX Code (for Pre-Auth flows)                        |
-| `getProofJwt`     | `(String, String?, [String:Any]?,String?) -> String` | Callback function to prepare proof-jwt for credential request |
-| `getAuthCode`     | `(String) -> String` | Handles authorization and returns the code (for Authorization flows)         |
-| `onCheckIssuerTrust`     | `(([String: Any]) -> Bool)?` | Optional parameter to implement user-trust based credential download from issuer         |
+| `getProofJwt`     | `(String, String?, [String]) -> String` | Callback function to prepare proof-jwt for credential request |
+| `authorizeUser`     | `(String) -> String` | Handles authorization and returns the code (for Authorization flows)         |
+| `onCheckIssuerTrust`     | `((String,[[String: Any]]) -> Bool)?` | Optional parameter to implement user-trust based credential download from issuer         |
 
 ---
 
----
-
-### 3. Constructing `IssuerMetadata`
-
-Supports both `ldp_vc` and `mso_mdoc`.
-
-#### 🔹 LDP VC Format:
-```swift
-let metadata = IssuerMetadata(
-    credentialAudience: "https://issuer.com",
-    credentialEndpoint: "https://issuer.com/credential",
-    credentialType: ["VerifiableCredential", "ExampleVC"],
-    context: ["https://www.w3.org/2018/credentials/v1"],
-    credentialFormat: .ldp_vc,
-    authorizationServers: ["https://auth.issuer.com"],
-    scope: "openid example"
-)
-```
-
-#### 🔹 MSO mDoc Format:
-```swift
-let metadata = IssuerMetadata(
-    credentialAudience: "https://issuer.com",
-    credentialEndpoint: "https://issuer.com/credential",
-    doctype: "org.iso.18013.5.1.mDL",
-    claims: ["given_name": AnyCodable("John"), "family_name": AnyCodable("Doe")],
-    credentialFormat: .mso_mdoc,
-    authorizationServers: ["https://auth.issuer.com"]
-)
-
-```
-
-### 4. ClientMetaData
+### 3. ClientMetaData
 
 ```swift
 public struct ClientMetaData {
@@ -163,7 +126,7 @@ public struct ClientMetaData {
 }
 ```
 
-### 5. ⚠️ Deprecated: Legacy Credential Request
+### 4. ⚠️ Deprecated: Legacy Credential Request
 
 This method is **deprecated** as of v0.4.0.  
 Please use `requestCredentialByCredentialOffer` or `requestCredentialFromTrustedIssuer` instead.
@@ -195,7 +158,7 @@ They carry structured error codes like `VCI-001`, `VCI-002` etc., to help consum
 | Code      | Exception Type                      | Description                                  |
 |-----------|-------------------------------------|----------------------------------------------|
 | VCI-001   | `AuthServerDiscoveryException`           | Failed to discover authorization server              |
-| VCI-002   | `DownloadFailedException`    | Failed to download Credential issuer              |
+| VCI-002   | `DownloadFailedException`    | Failed to download Credential from issuer              |
 | VCI-003   | `InvalidAccessTokenException`       | Access token is invalid                   |
 | VCI-004   | `InvalidDataProvidedException`         | Required details not provided      |
 | VCI-005   | `InvalidPublicKeyException`      | Invalid public key passed metadata              |

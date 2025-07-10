@@ -1,6 +1,6 @@
 import Foundation
 
-class OfferFetchFailedException: VCIClientException {
+class CredentialOfferFetchFailedException: VCIClientException {
     init(_ message: String?) {
         super.init(
             code: "VCI-008",

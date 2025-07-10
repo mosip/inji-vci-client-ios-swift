@@ -1,18 +1,18 @@
 @testable import VCIClient
 import XCTest
 
-final class AuthServerResolverTests: XCTestCase {
+final class AuthorizationServerResolverTests: XCTestCase {
     func test_singleAuthServerInMetadata_shouldResolve() async throws {
         let url = "https://auth1.example.com"
         let mockDiscovery = MockAuthServerDiscoveryService()
-        mockDiscovery.mockMetadataByUrl[url] = AuthServerMetadata(
+        mockDiscovery.mockMetadataByUrl[url] = AuthorizationServerMetadata(
             issuer: url,
             grantTypesSupported: ["authorization_code"], tokenEndpoint: "https://mock-token",
             authorizationEndpoint: "\(url)/auth"
         )
 
-        let resolver = AuthServerResolver(authServerDiscoveryService: mockDiscovery)
-        let issuer = IssuerMetadata(credentialAudience: url, credentialEndpoint: "", credentialFormat: CredentialFormat.ldp_vc, authorizationServers: [url])
+        let resolver = AuthorizationServerResolver(authServerDiscoveryService: mockDiscovery)
+        let issuer = IssuerMetadata(credentialIssuer: url, credentialEndpoint: "", credentialFormat: CredentialFormat.ldp_vc, authorizationServers: [url])
         let offer = CredentialOffer(
             credentialIssuer: "https://mock-issuer", credentialConfigurationIds: ["mock-cred"], grants: nil
         )
@@ -25,14 +25,14 @@ final class AuthServerResolverTests: XCTestCase {
     func test_grantAuthServer_shouldOverrideMetadata() async throws {
         let overrideUrl = "https://grant-override.com"
         let mockDiscovery = MockAuthServerDiscoveryService()
-        mockDiscovery.mockMetadataByUrl[overrideUrl] = AuthServerMetadata(
+        mockDiscovery.mockMetadataByUrl[overrideUrl] = AuthorizationServerMetadata(
             issuer: overrideUrl,
             grantTypesSupported: ["authorization_code"], tokenEndpoint: "mock",
             authorizationEndpoint: "\(overrideUrl)/auth"
         )
 
-        let resolver = AuthServerResolver(authServerDiscoveryService: mockDiscovery)
-        let issuer = IssuerMetadata(credentialAudience: overrideUrl, credentialEndpoint: "", credentialFormat: CredentialFormat.ldp_vc, authorizationServers: ["https://unused.com", "https://grant-override.com"])
+        let resolver = AuthorizationServerResolver(authServerDiscoveryService: mockDiscovery)
+        let issuer = IssuerMetadata(credentialIssuer: overrideUrl, credentialEndpoint: "", credentialFormat: CredentialFormat.ldp_vc, authorizationServers: ["https://unused.com", "https://grant-override.com"])
         let offer = CredentialOffer(credentialIssuer: "https://mock", credentialConfigurationIds: ["mock-id"], grants: CredentialOfferGrants(
             preAuthorizedGrant: nil, authorizationCodeGrant: AuthorizationCodeGrant(issuerState: nil, authorizationServer: overrideUrl)
         ))
@@ -45,15 +45,15 @@ final class AuthServerResolverTests: XCTestCase {
     func test_multipleAuthServers_firstValidShouldWin() async throws {
         let mockDiscovery = MockAuthServerDiscoveryService()
         mockDiscovery.urlsThatThrow.insert("https://fail.com")
-        mockDiscovery.mockMetadataByUrl["https://valid.com"] = AuthServerMetadata(
+        mockDiscovery.mockMetadataByUrl["https://valid.com"] = AuthorizationServerMetadata(
             issuer: "https://valid.com",
             grantTypesSupported: ["authorization_code"], tokenEndpoint: "mock-token",
             authorizationEndpoint: "https://valid.com/auth"
         )
 
-        let resolver = AuthServerResolver(authServerDiscoveryService: mockDiscovery)
+        let resolver = AuthorizationServerResolver(authServerDiscoveryService: mockDiscovery)
         let issuer = IssuerMetadata(
-            credentialAudience: "https://fallback.com",
+            credentialIssuer: "https://fallback.com",
             credentialEndpoint: "mock",
             credentialFormat: CredentialFormat.ldp_vc,
             authorizationServers: ["https://fail.com", "https://valid.com"]
@@ -70,9 +70,9 @@ final class AuthServerResolverTests: XCTestCase {
         let mockDiscovery = MockAuthServerDiscoveryService()
         mockDiscovery.urlsThatThrow = Set(urls)
 
-        let resolver = AuthServerResolver(authServerDiscoveryService: mockDiscovery)
+        let resolver = AuthorizationServerResolver(authServerDiscoveryService: mockDiscovery)
         let issuer = IssuerMetadata(
-            credentialAudience: "https://fallback.com",
+            credentialIssuer: "https://fallback.com",
             credentialEndpoint: "mock",
             credentialFormat: CredentialFormat.ldp_vc,
             authorizationServers: urls
@@ -81,7 +81,7 @@ final class AuthServerResolverTests: XCTestCase {
         do {
             _ = try await resolver.resolveForAuthCode(issuerMetadata: issuer)
             XCTFail("Expected AuthServerDiscoveryException but no error was thrown")
-        } catch let error as AuthServerDiscoveryException {
+        } catch let error as AutorizationServerDiscoveryException {
             XCTAssertTrue(error.message.contains("None of the authorization servers"))
         } catch {
             XCTFail("Expected AuthServerDiscoveryException, but got \(type(of: error)): \(error)")
@@ -91,15 +91,15 @@ final class AuthServerResolverTests: XCTestCase {
     func test_fallbackToCredentialIssuer_shouldWork() async throws {
         let fallback = "https://fallback-issuer.com"
         let mockDiscovery = MockAuthServerDiscoveryService()
-        mockDiscovery.mockMetadataByUrl[fallback] = AuthServerMetadata(
+        mockDiscovery.mockMetadataByUrl[fallback] = AuthorizationServerMetadata(
             issuer: fallback,
             grantTypesSupported: ["authorization_code"], tokenEndpoint: "mock-token",
             authorizationEndpoint: "\(fallback)/auth"
         )
 
-        let resolver = AuthServerResolver(authServerDiscoveryService: mockDiscovery)
+        let resolver = AuthorizationServerResolver(authServerDiscoveryService: mockDiscovery)
         let issuer = IssuerMetadata(
-            credentialAudience: fallback,
+            credentialIssuer: fallback,
             credentialEndpoint: "mock",
             credentialFormat: CredentialFormat.ldp_vc,
             authorizationServers: nil
@@ -113,15 +113,15 @@ final class AuthServerResolverTests: XCTestCase {
     func test_issuerMismatch_shouldThrow() async {
         let realUrl = "https://expected.com"
         let mockDiscovery = MockAuthServerDiscoveryService()
-        mockDiscovery.mockMetadataByUrl[realUrl] = AuthServerMetadata(
+        mockDiscovery.mockMetadataByUrl[realUrl] = AuthorizationServerMetadata(
             issuer: "https://mismatch.com",
             grantTypesSupported: ["authorization_code"], tokenEndpoint: "mock",
             authorizationEndpoint: "\(realUrl)/auth"
         )
 
-        let resolver = AuthServerResolver(authServerDiscoveryService: mockDiscovery)
+        let resolver = AuthorizationServerResolver(authServerDiscoveryService: mockDiscovery)
         let issuer = IssuerMetadata(
-            credentialAudience: "mock",
+            credentialIssuer: "mock",
             credentialEndpoint: "mock",
             credentialFormat: CredentialFormat.ldp_vc,
             authorizationServers: [realUrl]
@@ -130,7 +130,7 @@ final class AuthServerResolverTests: XCTestCase {
         do {
             _ = try await resolver.resolveForAuthCode(issuerMetadata: issuer)
             XCTFail("Expected AuthServerDiscoveryException but no error was thrown")
-        } catch let error as AuthServerDiscoveryException {
+        } catch let error as AutorizationServerDiscoveryException {
             XCTAssertTrue(error.message.contains("Issuer mismatch"))
         } catch {
             XCTFail("Expected AuthServerDiscoveryException, but got \(type(of: error)): \(error)")
@@ -140,15 +140,15 @@ final class AuthServerResolverTests: XCTestCase {
     func test_unsupportedGrantType_shouldThrow() async {
         let url = "https://auth.example.com"
         let mockDiscovery = MockAuthServerDiscoveryService()
-        mockDiscovery.mockMetadataByUrl[url] = AuthServerMetadata(
+        mockDiscovery.mockMetadataByUrl[url] = AuthorizationServerMetadata(
             issuer: url,
             grantTypesSupported: ["implicit"], tokenEndpoint: "mock",
             authorizationEndpoint: "\(url)/auth"
         )
 
-        let resolver = AuthServerResolver(authServerDiscoveryService: mockDiscovery)
+        let resolver = AuthorizationServerResolver(authServerDiscoveryService: mockDiscovery)
         let issuer = IssuerMetadata(
-            credentialAudience: "mock",
+            credentialIssuer: "mock",
             credentialEndpoint: "mock",
             credentialFormat: CredentialFormat.ldp_vc,
             authorizationServers: [url]
@@ -157,7 +157,7 @@ final class AuthServerResolverTests: XCTestCase {
         do {
             _ = try await resolver.resolveForAuthCode(issuerMetadata: issuer)
             XCTFail("Expected AuthServerDiscoveryException but no error was thrown")
-        } catch let error as AuthServerDiscoveryException {
+        } catch let error as AutorizationServerDiscoveryException {
             print("---------",error.localizedDescription)
             XCTAssertTrue(error.message.contains("not supported"))
         } catch {
@@ -168,15 +168,15 @@ final class AuthServerResolverTests: XCTestCase {
     func test_missingAuthorizationEndpoint_shouldThrow() async {
         let url = "https://auth.no-endpoint.com"
         let mockDiscovery = MockAuthServerDiscoveryService()
-        mockDiscovery.mockMetadataByUrl[url] = AuthServerMetadata(
+        mockDiscovery.mockMetadataByUrl[url] = AuthorizationServerMetadata(
             issuer: url,
             grantTypesSupported: ["authorization_code"], tokenEndpoint: "mock",
             authorizationEndpoint: nil // Intentionally missing
         )
 
-        let resolver = AuthServerResolver(authServerDiscoveryService: mockDiscovery)
+        let resolver = AuthorizationServerResolver(authServerDiscoveryService: mockDiscovery)
         let issuer = IssuerMetadata(
-            credentialAudience: "mock",
+            credentialIssuer: "mock",
             credentialEndpoint: "mock",
             credentialFormat: CredentialFormat.ldp_vc,
             authorizationServers: [url]
@@ -185,7 +185,7 @@ final class AuthServerResolverTests: XCTestCase {
         do {
             _ = try await resolver.resolveForAuthCode(issuerMetadata: issuer)
             XCTFail("Expected AuthServerDiscoveryException but no error was thrown")
-        } catch let error as AuthServerDiscoveryException {
+        } catch let error as AutorizationServerDiscoveryException {
             print("----",error.localizedDescription)
             XCTAssertTrue(error.message.contains("Missing authorization_endpoint"))
         } catch {

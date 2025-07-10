@@ -6,7 +6,7 @@ class LdpVcCredentialRequestTests: XCTestCase {
     var credentialRequest: LdpVcCredentialRequest!
     let url = URL(string: "https://domain.net/credential")!
     let accessToken = "AccessToken"
-    let issuer = IssuerMetadata(credentialAudience: "https://domain.net",
+    let issuer = IssuerMetadata(credentialIssuer: "https://domain.net",
                             credentialEndpoint: "https://domain.net/credential",
                             credentialType: ["VerifiableCredential"],
                             credentialFormat: .ldp_vc)
@@ -39,7 +39,7 @@ class LdpVcCredentialRequestTests: XCTestCase {
     
     func testGenerateRequestBodySuccess() {
         let proofJWT = JWTProof(jwt: "xxxx.yyyy.zzzz")
-        let issuer = IssuerMetadata(credentialAudience: "https://domain.net",
+        let issuer = IssuerMetadata(credentialIssuer: "https://domain.net",
                                 credentialEndpoint: "https://domain.net/credential",
                                 
                                 credentialType: ["VerifiableCredential"],
@@ -67,7 +67,7 @@ class LdpVcCredentialRequestTests: XCTestCase {
     }
     
     func testshouldReturnValidatorResultWithIsValidAsFalseWithInvalidFieldsWhenRequiredCredentialTypeIsNotAvailableInIssuerMetadata() {
-        let issuerMetadataWithoutCredentialType = IssuerMetadata(credentialAudience: "https://domain.net",
+        let issuerMetadataWithoutCredentialType = IssuerMetadata(credentialIssuer: "https://domain.net",
                                 credentialEndpoint: "https://domain.net/credential",
                                 
                                 credentialFormat: .mso_mdoc)

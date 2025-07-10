@@ -1,48 +1,60 @@
 import Foundation
 
- class IssuerMetadataService {
+class IssuerMetadataService {
     private let session: NetworkManager
     private let timeoutMillis: Int64
+    private var cachedRawMetadata: [String: [String: Any]] = [:]
 
     init(session: NetworkManager = NetworkManager.shared, timeoutMillis: Int64 = 10000) {
         self.session = session
         self.timeoutMillis = timeoutMillis
     }
 
-    func fetch(issuerUrl: String, credentialConfigurationId: String) async throws -> IssuerMetadataResult {
-        let wellKnownUrl = issuerUrl + "/.well-known/openid-credential-issuer"
+    func fetchIssuerMetadataResult(
+        credentialIssuer: String,
+        credentialConfigurationId: String
+    ) async throws -> IssuerMetadataResult {
+        let rawIssuerMetadata: [String: Any]
 
-        do {
-            let response = try await session.sendRequest(
-                url: wellKnownUrl,
-                method: .get,
-                headers: ["Accept": "application/json"],
-                timeoutMillis: timeoutMillis
-            )
-
-            guard !response.body.isEmpty else {
-                throw IssuerMetadataFetchException("Issuer metadata response is empty.")
-            }
-
-            guard let data = response.body.data(using: .utf8),
-                  let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                throw IssuerMetadataFetchException("Issuer metadata is not valid JSON.")
-            }
-
-            let resolved = try resolveMetadata(
-                credentialConfigurationId: credentialConfigurationId,
-                rawIssuerMetadata: jsonObject
-            )
-
-            return IssuerMetadataResult(
-                issuerMetadata: resolved,
-                raw: jsonObject
-            )
-        } catch let e as IssuerMetadataFetchException {
-            throw e
-        } catch {
-            throw IssuerMetadataFetchException("Failed to fetch issuer metadata: \(error.localizedDescription)")
+        if let cached = cachedRawMetadata[credentialIssuer] {
+            rawIssuerMetadata = cached
+        } else {
+            let fetched = try await fetchAndParseIssuerMetadata(from: credentialIssuer)
+            cachedRawMetadata[credentialIssuer] = fetched
+            rawIssuerMetadata = fetched
         }
+
+        let resolvedIssuerMetadata = try resolveMetadata(
+            credentialConfigurationId: credentialConfigurationId,
+            rawIssuerMetadata: rawIssuerMetadata
+        )
+
+        return IssuerMetadataResult(
+            issuerMetadata: resolvedIssuerMetadata,
+            raw: rawIssuerMetadata,
+            credentialIssuer: credentialIssuer
+        )
+    }
+
+    func fetchAndParseIssuerMetadata(from credentialIssuer: String) async throws -> [String: Any] {
+        let wellKnownUrl = credentialIssuer + Constants.credentialIssuerWellknownUriSuffix
+        let response = try await session.sendRequest(
+            url: wellKnownUrl,
+            method: .get,
+            headers: ["Accept": "application/json"],
+            timeoutMillis: timeoutMillis
+        )
+
+        guard !response.body.isEmpty else {
+            throw IssuerMetadataFetchException("Issuer metadata response is empty.")
+        }
+
+        guard let data = response.body.data(using: .utf8),
+              let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw IssuerMetadataFetchException("Issuer metadata is not valid JSON.")
+        }
+
+        return jsonObject
     }
 
     private func resolveMetadata(credentialConfigurationId: String, rawIssuerMetadata: [String: Any]) throws -> IssuerMetadata {
@@ -64,34 +76,37 @@ import Foundation
             throw IssuerMetadataFetchException("Unsupported or missing credential format")
         }
 
+        let scope = credentialType["scope"] as? String ?? "openid"
+
         switch format {
         case .mso_mdoc:
             guard let doctype = credentialType["doctype"] as? String else {
                 throw IssuerMetadataFetchException("Missing doctype")
             }
+
             let claims = credentialType["claims"] as? [String: Any]
             return IssuerMetadata(
-                credentialAudience: credentialIssuer,
+                credentialIssuer: credentialIssuer,
                 credentialEndpoint: credentialEndpoint,
                 credentialFormat: .mso_mdoc,
                 doctype: doctype,
                 claims: claims?.mapValues { AnyCodable($0) },
-                authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String]
+                authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String],
+                scope: scope
             )
 
         case .ldp_vc:
             let definition = credentialType["credential_definition"] as? [String: Any] ?? [:]
             let types = definition["type"] as? [String]
             let context = definition["@context"] as? [String]
-            let scope = credentialType["scope"] as? String
             return IssuerMetadata(
-                credentialAudience: credentialIssuer,
+                credentialIssuer: credentialIssuer,
                 credentialEndpoint: credentialEndpoint,
                 credentialType: types,
                 context: context,
                 credentialFormat: .ldp_vc,
                 authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String],
-                scope: "openid \(scope ?? "")"
+                scope: scope
             )
         }
     }

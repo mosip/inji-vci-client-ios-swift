@@ -12,9 +12,10 @@ final class VCIClientTests: XCTestCase {
 
         let result = try await client.requestCredentialByCredentialOffer(
             credentialOffer: "mock-offer",
-            clientMetadata: ClientMetaData(clientId: "", redirectUri: ""), getTxCode: {_,_,_ in "mock-tx-code"},
-            getProofJwt: { _, _, _, _ in "mock-jwt" },
-            getAuthCode: { _ in "auth-code" }
+            clientMetadata: ClientMetadata(clientId: "", redirectUri: ""), getTxCode: {_,_,_ in "mock-tx-code"},
+            authorizeUser: { _ in "auth-code" },
+            getTokenResponse: {_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+            getProofJwt: { _, _, _ in "mock-jwt" }
         )
 
         XCTAssertNotNil(result)
@@ -33,9 +34,10 @@ final class VCIClientTests: XCTestCase {
         do {
             _ = try await client.requestCredentialByCredentialOffer(
                 credentialOffer: "mock-offer",
-                clientMetadata: ClientMetaData(clientId: "", redirectUri: ""), getTxCode: {_,_,_ in "mock-tx-code"},
-                getProofJwt: { _, _, _, _ in "mock-jwt" },
-                getAuthCode: { _ in "auth-code" }
+                clientMetadata: ClientMetadata(clientId: "", redirectUri: ""), getTxCode: {_,_,_ in "mock-tx-code"},
+                authorizeUser: { _ in "auth-code" },
+                getTokenResponse: {_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "mock-jwt" }
             )
             XCTFail("Expected error but got success")
         } catch let error as VCIClientException {
@@ -49,16 +51,16 @@ final class VCIClientTests: XCTestCase {
         let mockHandler = MockTrustedIssuerHandler()
         let client = VCIClient(
             traceabilityId: "test",
-            trustedIssuerHandler: mockHandler
+            trustedIssuerFlowHandler: mockHandler
         )
 
         let result = try await client.requestCredentialFromTrustedIssuer(
-            issuerMetadata: IssuerMetadata(
-                credentialAudience: "https://aud", credentialEndpoint: "", credentialFormat: CredentialFormat.ldp_vc
-            ),
-            clientMetadata: ClientMetaData(clientId: "", redirectUri: ""),
-            getProofJwt: { _, _, _, _ in "mock-jwt" },
-            getAuthCode: { _ in "auth-code" }
+            credentialIssuer: "mock",
+            credentialConfigurationId: "mock-id",
+            clientMetadata: ClientMetadata(clientId: "", redirectUri: ""),
+            authorizeUser: {_ in "auth_code"},
+            getTokenResponse: { _ in TokenResponse(accessToken: "mock-token", tokenType: "Bearer")},
+            getProofJwt: { _, _, _ in "mock-jwt" }
         )
 
         XCTAssertNotNil(result)
@@ -71,17 +73,17 @@ final class VCIClientTests: XCTestCase {
 
         let client = VCIClient(
             traceabilityId: "test",
-            trustedIssuerHandler: mockHandler
+            trustedIssuerFlowHandler: mockHandler
         )
 
         do {
             _ = try await client.requestCredentialFromTrustedIssuer(
-                issuerMetadata: IssuerMetadata(
-                    credentialAudience: "https://aud", credentialEndpoint: "", credentialFormat: CredentialFormat.ldp_vc
-                ),
-                clientMetadata: ClientMetaData(clientId: "", redirectUri: ""),
-                getProofJwt: { _, _, _, _ in "mock-jwt" },
-                getAuthCode: { _ in "auth-code" }
+                credentialIssuer: "mock",
+                credentialConfigurationId: "mock-id",
+                clientMetadata: ClientMetadata(clientId: "", redirectUri: ""),
+                authorizeUser: {_ in "auth_code"},
+                getTokenResponse: { _ in TokenResponse(accessToken: "mock-token", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "mock-jwt" }
             )
             XCTFail("Expected error but got success")
         } catch let error as VCIClientException {
@@ -192,5 +194,40 @@ final class VCIClientTests: XCTestCase {
             XCTFail("Unexpected error type: \(error)")
         }
     }
+    
+    func testGetIssuerMetadata_success() async throws {
+        let mockIssuerMetadataService = MockIssuerMetadataService(session: MockNetworkManager())
+        mockIssuerMetadataService.resultToReturn = IssuerMetadataResult(issuerMetadata: IssuerMetadata(credentialIssuer: "mock", credentialEndpoint: "mock", credentialFormat: .ldp_vc), raw: ["issuerName": "TestIssuer"])
+
+        let client = VCIClient(
+            traceabilityId: "test",
+            issuerMetadataService: mockIssuerMetadataService
+        )
+
+        let result = try await client.getIssuerMetadata(credentialIssuer: "https://issuer.example.com")
+
+        XCTAssertEqual(result["issuerName"] as? String, "TestIssuer")
+    }
+    
+    func testGetIssuerMetadata_failure() async {
+        let mockIssuerMetadataService = MockIssuerMetadataService(session: MockNetworkManager())
+        mockIssuerMetadataService.shouldThrow = true
+
+        let client = VCIClient(
+            traceabilityId: "test",
+            issuerMetadataService: mockIssuerMetadataService
+        )
+
+        do {
+            _ = try await client.getIssuerMetadata(credentialIssuer: "https://issuer.example.com")
+            XCTFail("Expected DownloadFailedException")
+        } catch is IssuerMetadataFetchException {
+          
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
+
 
 }

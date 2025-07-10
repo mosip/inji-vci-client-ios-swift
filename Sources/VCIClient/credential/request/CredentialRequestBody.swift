@@ -1,6 +1,6 @@
 import Foundation
 
-struct CredentialRequestBody: Encodable {
+struct LdpCredentialRequestBody: Encodable {
     let format: CredentialFormat
     let credential_definition: CredentialDefinition
     let proof: JWTProof
@@ -9,6 +9,20 @@ struct CredentialRequestBody: Encodable {
         self.format = format
         self.credential_definition = credential_definition
         self.proof = proof
+    }
+}
+
+struct MsoMdocCredentialRequestBody: Encodable {
+    let format: CredentialFormat
+    let proof: JWTProof
+    let doctype: String
+    let claims: [String: AnyCodable]?
+
+    init(format: CredentialFormat, doctype: String, claims: [String: AnyCodable]?, proof: JWTProof) {
+        self.format = format
+        self.doctype = doctype
+        self.proof = proof
+        self.claims = claims
     }
 }
 

@@ -1,12 +1,12 @@
 import Foundation
 
- class PreAuthFlowService {
-    private let authServerResolver: AuthServerResolver
+class PreAuthCodeFlowService {
+    private let authServerResolver: AuthorizationServerResolver
     private let tokenService: TokenService
     private let credentialExecutor: CredentialRequestExecutor
 
     init(
-        authServerResolver: AuthServerResolver = AuthServerResolver(),
+        authServerResolver: AuthorizationServerResolver = AuthorizationServerResolver(),
         tokenService: TokenService = TokenService(),
         credentialExecutor: CredentialRequestExecutor = CredentialRequestExecutor()
     ) {
@@ -16,62 +16,58 @@ import Foundation
     }
 
     func requestCredentials(
-        issuerMetadataResult: IssuerMetadataResult,
-        offer: CredentialOffer,
-        getTxCode: ((_ inputMode: String?, _ description: String?, _ _length: Int?) async throws -> String)? = nil,
-        getProofJwt: @escaping (
-            _ accessToken: String,
-            _ cNonce: String?,
-            _ issuerMetadata: [String: Any],
-            _ credentialConfigurationId: String
-        ) async throws -> String,
+        issuerMetadata: IssuerMetadata,
+        credentialOffer: CredentialOffer,
+        getTokenResponse: @escaping TokenresponseCallback,
+        getProofJwt: @escaping ProofJwtCallback,
         credentialConfigurationId: String,
+        proofSigningAlgorithmsSupportedSupported: [String],
+        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)? = nil,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse {
         let authServerMetadata = try await authServerResolver
-            .resolveForPreAuth(issuerMetadata: issuerMetadataResult.issuerMetadata, credentialOffer: offer)
+            .resolveForPreAuth(issuerMetadata: issuerMetadata, credentialOffer: credentialOffer)
 
         guard let tokenEndpoint = authServerMetadata.tokenEndpoint else {
             throw DownloadFailedException("Token endpoint is missing in AuthServer metadata.")
         }
+        
+        guard let grant = credentialOffer.grants?.preAuthorizedGrant else {
+            throw InvalidDataProvidedException("Missing pre-authorized grant details.")
+        }
 
         let txCode: String? = await {
-            if offer.grants?.preAuthorizedGrant?.txCode != nil {
-                let txCode = offer.grants?.preAuthorizedGrant?.txCode
-                return try? await getTxCode?(txCode?.inputMode, txCode?.description, txCode?.length)
+            if let txCodeObject = grant.txCode {
+                return try? await getTxCode?(txCodeObject.inputMode, txCodeObject.description, txCodeObject.length)
             } else {
                 return nil
             }
         }()
 
-        if offer.grants?.preAuthorizedGrant?.txCode != nil && txCode == nil {
+        if grant.txCode != nil && txCode == nil {
             throw DownloadFailedException("tx_code required but no provider was given.")
         }
 
-        guard let grant = offer.grants?.preAuthorizedGrant else {
-            throw InvalidDataProvidedException("Missing pre-authorized grant details.")
-        }
-
         let token = try await tokenService.getAccessToken(
-            tokenEndpoint: tokenEndpoint,
-            preAuthCode: grant.preAuthorizedCode,
+            getTokenResponse: getTokenResponse, tokenEndpoint: tokenEndpoint,
+            preAuthCode: grant.preAuthCode,
             txCode: txCode
         )
-
+        
         let jwt = try await getProofJwt(
-            token.accessToken,
+            issuerMetadata.credentialIssuer,
             token.cNonce,
-            issuerMetadataResult.raw as [String : Any],
-            credentialConfigurationId
+            proofSigningAlgorithmsSupportedSupported
         )
 
         let proof = JWTProof(jwt: jwt)
 
         guard let credential = try await credentialExecutor.requestCredential(
-            issuerMetadata: issuerMetadataResult.issuerMetadata,
+            issuerMetadata: issuerMetadata,
+            credentialConfigurationId: credentialConfigurationId,
             proof: proof,
             accessToken: token.accessToken,
-            timeoutInMillis: downloadTimeoutInMillis
+            timeoutInMillis: downloadTimeoutInMillis
         ) else {
             throw DownloadFailedException("Credential request failed.")
         }

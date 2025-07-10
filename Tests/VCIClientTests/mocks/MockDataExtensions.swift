@@ -4,7 +4,7 @@ import Foundation
 extension IssuerMetadata {
     static func mock() -> IssuerMetadata {
         return IssuerMetadata(
-            credentialAudience: "https://example.com",
+            credentialIssuer: "https://example.com",
             credentialEndpoint: "https://example.com/credential",
             credentialFormat: .mso_mdoc,
             doctype: "org.iso.18013.5.1.mDL",
@@ -20,8 +20,8 @@ extension CredentialOffer {
             credentialIssuer: "https://mock-issuer",
             credentialConfigurationIds: ["mock-id"],
             grants: CredentialOfferGrants(
-                preAuthorizedGrant: PreAuthorizedCodeGrant(
-                    preAuthorizedCode: "pre-auth-code",
+                preAuthorizedGrant: PreAuthCodeGrant(
+                    preAuthCode: "pre-auth-code",
                     txCode: nil,
                     authorizationServer: nil,
                     interval: nil
@@ -36,8 +36,8 @@ extension CredentialOffer {
             credentialIssuer: "https://mock-issuer",
             credentialConfigurationIds: ["mock-id"],
             grants: CredentialOfferGrants(
-                preAuthorizedGrant: PreAuthorizedCodeGrant(
-                    preAuthorizedCode: "pre-auth-code",
+                preAuthorizedGrant: PreAuthCodeGrant(
+                    preAuthCode: "pre-auth-code",
                     txCode: TxCode(inputMode: "text", length: 5, description: "provide pin"),
                     authorizationServer: nil,
                     interval: nil
@@ -66,7 +66,7 @@ extension CredentialResponse {
             ],
         ] as [String: Any]
 
-        return CredentialResponse(credential: AnyCodable(fakeCredential))
+        return CredentialResponse(credential: AnyCodable(fakeCredential),credentialIssuer: "mock-issuer",credentialConfigurationId: "mock")
     }
 }
 
