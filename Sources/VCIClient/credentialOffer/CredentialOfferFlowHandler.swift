@@ -19,9 +19,9 @@ class CredentialOfferFlowHandler {
     public func downloadCredentials(
         credentialOffer: String,
         clientMetadata: ClientMetadata,
-        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)?,
+        getTxCode: TxCodeCallback,
         authorizeUser: @escaping AuthorizeUserCallback,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping ProofJwtCallback,
         onCheckIssuerTrust: CheckIssuerTrustCallback = nil,
         networkSession: NetworkManager = NetworkManager.shared,

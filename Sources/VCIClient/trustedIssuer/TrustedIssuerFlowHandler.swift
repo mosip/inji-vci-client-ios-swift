@@ -12,7 +12,7 @@ class TrustedIssuerFlowHandler {
         credentialConfigurationId: String,
         clientMetadata: ClientMetadata,
         authorizeUser: @escaping AuthorizeUserCallback,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping ProofJwtCallback,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
         networkSession: NetworkManager = NetworkManager.shared

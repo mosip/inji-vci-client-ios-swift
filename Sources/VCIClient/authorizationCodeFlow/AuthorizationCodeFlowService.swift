@@ -22,7 +22,7 @@ class AuthorizationCodeFlowService {
         issuerMetadata: IssuerMetadata,
         clientMetadata: ClientMetadata,
         authorizeUser: @escaping AuthorizeUserCallback,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping ProofJwtCallback,
         credentialConfigurationId: String,
         proofSigningAlgorithmsSupportedSupported: [String],
@@ -75,7 +75,7 @@ class AuthorizationCodeFlowService {
         clientMetadata: ClientMetadata,
         authorizeUser: @escaping AuthorizeUserCallback,
         pkceSession: PKCESessionManager.PKCESession,
-        getTokenResponse: @escaping TokenresponseCallback
+        getTokenResponse: @escaping TokenResponseCallback
     ) async throws -> TokenResponse {
         guard let authorizationEndpoint = authServerMetadata.authorizationEndpoint else {
             throw DownloadFailedException("Missing authorization endpoint")

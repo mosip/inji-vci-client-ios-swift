@@ -18,11 +18,11 @@ class PreAuthCodeFlowService {
     func requestCredentials(
         issuerMetadata: IssuerMetadata,
         credentialOffer: CredentialOffer,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping ProofJwtCallback,
         credentialConfigurationId: String,
         proofSigningAlgorithmsSupportedSupported: [String],
-        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)? = nil,
+        getTxCode: TxCodeCallback = nil,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse {
         let authServerMetadata = try await authServerResolver

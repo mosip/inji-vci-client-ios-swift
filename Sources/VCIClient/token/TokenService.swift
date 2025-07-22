@@ -7,7 +7,7 @@ class TokenService {
     }
 
     func getAccessToken(
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         tokenEndpoint: String,
         timeoutMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
         preAuthCode: String,
@@ -24,7 +24,7 @@ class TokenService {
     }
 
     func getAccessToken(
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         tokenEndpoint: String,
         timeoutMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
         authCode: String,
@@ -46,7 +46,7 @@ class TokenService {
     
     private func obtainAccessToken(
         grantType: GrantType,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         tokenEndpoint: String,
         timeoutMillis: Int64,
         preAuthCode: String? = nil,

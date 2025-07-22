@@ -1,7 +1,7 @@
 # INJI VCI Client
 
 The **Inji-Vci-Client-iOS-Swift** is a Swift-based library built to simplify credential issuance via [OpenID for Verifiable Credential Issuance (OID4VCI)](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-13.html) protocol.  
-It supports both **Credential Offer** and **Trusted Issuer** flows, with secure proof handling, PKCE support, and custom error handling.
+It supports **Issuer Initiated (Credential Offer)** and **Wallet Initiated (Trusted Issuer)** flows, with secure proof handling, PKCE support, and custom error handling.
 
 ---
 
@@ -9,12 +9,11 @@ It supports both **Credential Offer** and **Trusted Issuer** flows, with secure 
 
 - Request credentials from OID4VCI-compliant credential issuers
 - Supports both:
-  - Credential Offer Flow. 
-  - Trusted Issuer Flow.
+  - Issuer Initiated Flow (Credential Offer Flow). 
+  - Wallet Initiated Flow (Trusted Issuer Flow).
 - Authorization server discovery for both flows
 - PKCE-compliant OAuth 2.0 Authorization Code flow (RFC 7636)
   - PKCE session is managed internally by the library
-- Automatic CNonce + Proof JWT handling
 - Well-defined **exception handling** with `VCI-XXX` error codes (see more on [this](#error-handling))
 - Support for multiple Credential formats:
   - `ldp_vc`
@@ -65,30 +64,27 @@ Retrieve the issuer metadata from the credential issuer's well-known endpoint.
 
 > Note: This method does not parse the metadata, it simply returns the raw Network response of well-known endpoint as a `Map<String, Any>`.
 
-###### Sample returned response
+#### Example Usage
 
 ```swift
-let issuerMetadata: [String: String] = [
+let issuerMetadata: [String: Any] = try await vciClient.getIssuerMetadata(credentialIssuer: "https://example.com/issuer")
+    
+//the response looks similar to this
+[String: Any] = [
     "credential_issuer": "https://example.com/issuer",
     "credential_endpoint": "https://example.com/issuer/credential"
 ]
 ```
 
-#### Example Usage
-
-```swift
-let issuerMetadata: [String: Any] = try await vciClient.getIssuerMetadata(credentialIssuer: "https://example.com/issuer")
-```
-
 ### 2. Request Credential
 
-### 2.1 Request Credential using Credential Offer
+### 2.1 Request Credential by Credential Offer
 
 - Method: `requestCredentialByCredentialOffer`
 - This method allows you to request a credential using a credential offer, which can be either an embedded JSON or a URI pointing to the credential offer.
 - It supports both **Pre-Authorization** and **Authorization** flows.
-- The library handles the PKCE flow internally, including the generation of `c_nonce` and proof JWTs.
-- You can also implement user-trust based credential download from issuer using `onCheckIssuerTrust` parameter.
+- The library handles the PKCE flow internally.
+- user-trust based credential download supported through onCheckIssuerTrust callback.
 
 #### Parameters
 
@@ -112,28 +108,6 @@ An instance of `CredentialResponse` containing:
 | credential                | JsonElement | The credential downloaded from the Issuer                                      |
 | credentialConfigurationId | String      | The identifier of the respective supported credential from well-known response |
 | credentialIssuer          | String      | URI of the Credential Issuer                                                   |
-
-
-##### Sample returned response
-
-```swift
-//Consider the credential is a Driver's License credential (credential format `mso_mdoc`)
-let credentialResponse = try await vciClient.requestCredentialByCredentialOffer(
-    credentialOffer: credentialOffer,
-    clientMetadata: clientMetadata,
-    getTxCode: getTxCode,
-    authorizeUser: authorizeUser,
-    getTokenResponse: getTokenResponse,
-    getProofJwt: getProofJwt,
-    onCheckIssuerTrust: onCheckIssuerTrust,
-    downloadTimeoutInMillis: downloadTimeoutInMillis
-)
-
-// Accessing the fields
-let credential = credentialResponse.credential // / This will be a JsonElement containing the credential data. eg - JsonPrimitive("omdk...t")
-let credentialConfigurationId = credentialResponse.credentialConfigurationId // eg - "DriversLicense"
-let credentialIssuer = credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
-```
 
 
 #### Example usage
@@ -175,9 +149,9 @@ let credentialResponse = try await vciClient.requestCredentialByCredentialOffer(
 )
 
 // Access the credential fields
-let credential = credentialResponse.credential
-let credentialConfigId = credentialResponse.credentialConfigurationId
-let credentialIssuer = credentialResponse.credentialIssuer
+let credential = credentialResponse.credential  // This will be a JsonElement containing the credential data. eg - JsonPrimitive("omdk...t")
+let credentialConfigId = credentialResponse.credentialConfigurationId // eg - "DriversLicense"
+let credentialIssuer = credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
 
 ```
 
@@ -209,26 +183,6 @@ An instance of `CredentialResponse` containing:
 | credential                | JsonElement | The credential downloaded from the Issuer                                      |
 | credentialConfigurationId | String      | The identifier of the respective supported credential from well-known response |
 | credentialIssuer          | String      | URI of the Credential Issuer                                                   |
-
-##### Sample returned response
-
-```swift
-//Consider the credential is a Driver's License credential (credential format `mso_mdoc`)
-let credentialResponse = try await vciClient.requestCredentialByCredentialOffer(
-    credentialIssuer: credentialIssuer,
-    credentialConfigurationId: credentialConfigurationId,
-    clientMetadata: clientMetadata,
-    authorizeUser: authorizeUser,
-    getTokenResponse: getTokenResponse,
-    getProofJwt: getProofJwt,
-    downloadTimeoutInMillis: downloadTimeoutInMillis
-)
-
-// Accessing the fields
-let credential = credentialResponse.credential // / This will be a JsonElement containing the credential data. eg - JsonPrimitive("omdk...t")
-let credentialConfigurationId = credentialResponse.credentialConfigurationId // eg - "DriversLicense"
-let credentialIssuer = credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
-```
 
 #### Example usage
 
@@ -262,9 +216,9 @@ let credentialResponse = try await vciClient.requestCredentialFromTrustedIssuer(
 )
 
 // Access the credential fields
-let credential = credentialResponse.credential
-let credentialConfigurationId = credentialResponse.credentialConfigurationId
-let credentialIssuer = credentialResponse.credentialIssuer
+let credential = credentialResponse.credential  // This will be a JsonElement containing the credential data. eg - JsonPrimitive("omdk...t")
+let credentialConfigId = credentialResponse.credentialConfigurationId // eg - "DriversLicense"
+let credentialIssuer = credentialResponse.credentialIssuer // eg - "https://sample-issuer.com"
 
 ```
 
@@ -272,7 +226,7 @@ let credentialIssuer = credentialResponse.credentialIssuer
 - Method: `requestCredential`
 - Request for credential from the providers (credential issuer), and receive the credential back.
 
-> Note: This method is deprecated and will be removed in future releases. Please migrate to `requestCredentialByCredentialOffer()` or `requestCredentialFromTrustedIssuer()` as soon as possible.
+> Note: This method is deprecated and will be removed in future releases. Please migrate to `requestCredentialByCredentialOffer()` or `requestCredentialFromTrustedIssuer()`.
  
 #### Parameters
 
@@ -337,7 +291,7 @@ credentialResponse.credentialIssuer // This will be null
 
 ## 🚨 Deprecation Notice
 
-The following methods are deprecated and will be removed in future releases. Please migrate to the suggested alternatives as soon as possible.
+The following methods are deprecated and will be removed in future releases. Please migrate to the suggested alternatives.
 
 | Method Name       | Description                                                                                     | Deprecated Since | Suggested Alternative                                                                                                                                                       |
 |-------------------|-------------------------------------------------------------------------------------------------|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -379,7 +333,7 @@ Mock-based tests are available covering:
 
 - Credential download flow (offer + trusted issuer)
 - Proof JWT signing callbacks
-- Token exchange and CNonce logic
+- Token exchange logic
 
 > See `VCIClientTest` for full coverage
 
@@ -390,7 +344,7 @@ Mock-based tests are available covering:
 
 Architecture decisions are noted as ADRs [here](https://github.com/mosip/inji-vci-client/tree/master/doc).
 
-Note: The android library is available [here](https://github.com/mosip/inji-vci-client)
+**Note: The android library is available [here](https://github.com/mosip/inji-vci-client)**
 
 ---
 

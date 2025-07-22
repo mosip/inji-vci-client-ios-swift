@@ -57,3 +57,16 @@ class MsoMdocVcCredentialRequest: CredentialRequestProtocol {
         }
     }
 }
+struct MsoMdocCredentialRequestBody: Encodable {
+    let format: CredentialFormat
+    let proof: JWTProof
+    let doctype: String
+    let claims: [String: AnyCodable]?
+
+    init(format: CredentialFormat, doctype: String, claims: [String: AnyCodable]?, proof: JWTProof) {
+        self.format = format
+        self.doctype = doctype
+        self.proof = proof
+        self.claims = claims
+    }
+}

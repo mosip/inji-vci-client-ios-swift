@@ -9,7 +9,7 @@ public struct IssuerMetadata : Codable{
     public let doctype: String?
     public let claims: [String: AnyCodable]?
     public let authorizationServers: [String]?
-    public var tokenEndpoint: String?
+    public let tokenEndpoint: String?
     public let scope: String?
 
     public init(

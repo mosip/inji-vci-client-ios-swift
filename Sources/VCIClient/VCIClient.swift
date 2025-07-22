@@ -6,6 +6,8 @@ public class VCIClient {
     let credentialOfferFlowHandler: CredentialOfferFlowHandler
     let trustedIssuerFlowHandler: TrustedIssuerFlowHandler
     let issuerMetadataService: IssuerMetadataService
+    let credentialRequestFactory: CredentialRequestFactoryProtocol
+
 
     public init(traceabilityId: String
     ) {
@@ -14,6 +16,7 @@ public class VCIClient {
         trustedIssuerFlowHandler = TrustedIssuerFlowHandler()
         issuerMetadataService = IssuerMetadataService()
         networkSession = NetworkManager.shared
+        credentialRequestFactory = CredentialRequestFactory()
     }
 
     init(traceabilityId: String?,
@@ -28,6 +31,7 @@ public class VCIClient {
         self.credentialOfferFlowHandler = credentialOfferHandler ?? CredentialOfferFlowHandler()
         self.trustedIssuerFlowHandler = trustedIssuerFlowHandler ?? TrustedIssuerFlowHandler()
         self.issuerMetadataService = issuerMetadataService ?? IssuerMetadataService()
+        self.credentialRequestFactory = credentialRequestFactory ?? CredentialRequestFactory()
     }
 
     private var logTag: String {
@@ -37,9 +41,9 @@ public class VCIClient {
     public func requestCredentialByCredentialOffer(
         credentialOffer: String,
         clientMetadata: ClientMetadata,
-        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)?,
+        getTxCode: TxCodeCallback,
         authorizeUser: @escaping AuthorizeUserCallback,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping ProofJwtCallback,
         onCheckIssuerTrust: CheckIssuerTrustCallback = nil,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
@@ -72,7 +76,7 @@ public class VCIClient {
         credentialConfigurationId: String,
         clientMetadata: ClientMetadata,
         authorizeUser: @escaping AuthorizeUserCallback,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping ProofJwtCallback,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse? {
@@ -117,7 +121,7 @@ public class VCIClient {
                 tokenEndpoint: nil,
                 scope: "openId"
             )
-            var request = try CredentialRequestFactory().createCredentialRequest(
+            var request = try credentialRequestFactory.createCredentialRequest(
                 credentialFormat: issuerMetadata.credentialFormat,
                 accessToken: accessToken,
                 issuer: issuerMetadata,

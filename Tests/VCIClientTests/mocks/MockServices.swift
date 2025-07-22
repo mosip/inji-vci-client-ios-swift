@@ -30,7 +30,7 @@ final class MockAuthServerResolver: AuthorizationServerResolver {
 // MARK: - Mock TokenService
 
 final class MockTokenService: TokenService {
-    override func getAccessToken(getTokenResponse: @escaping TokenresponseCallback,
+    override func getAccessToken(getTokenResponse: @escaping TokenResponseCallback,
                                  tokenEndpoint: String,
                                  timeoutMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
                                  preAuthCode: String,
@@ -44,7 +44,7 @@ final class MockTokenService: TokenService {
         )
     }
 
-    override func getAccessToken(getTokenResponse: @escaping TokenresponseCallback,
+    override func getAccessToken(getTokenResponse: @escaping TokenResponseCallback,
                                  tokenEndpoint: String,
                                  timeoutMillis: Int64 = Constants.defaultNetworkTimeoutInMillis,
                                  authCode: String,
@@ -91,9 +91,9 @@ final class MockCredentialOfferHandler: CredentialOfferFlowHandler {
     override func downloadCredentials(
         credentialOffer: String,
         clientMetadata: ClientMetadata,
-        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)?,
+        getTxCode: TxCodeCallback,
         authorizeUser: @escaping (_ authorizationEndpoint: String) async throws -> String,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping (
             _ credentialIssuer: String,
             _ cNonce: String?,
@@ -120,7 +120,7 @@ class MockTrustedIssuerHandler: TrustedIssuerFlowHandler {
         credentialConfigurationId: String,
         clientMetadata: ClientMetadata,
         authorizeUser: @escaping (_ authorizationEndpoint: String) async throws -> String,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping (
             _ credentialIssuer: String,
             _ cNonce: String?,
@@ -290,7 +290,7 @@ final class MockAuthorizationCodeFlowService: AuthorizationCodeFlowService {
         issuerMetadata: IssuerMetadata ,
         clientMetadata: ClientMetadata,
         authorizeUser: @escaping (_ authorizationEndpoint: String) async throws -> String,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping (
             _ credentialIssuer: String,
             _ cNonce: String?,
@@ -344,7 +344,7 @@ final class MockPreAuthFlowService: PreAuthCodeFlowService {
     override func requestCredentials(
         issuerMetadata: IssuerMetadata,
         credentialOffer: CredentialOffer,
-        getTokenResponse: @escaping TokenresponseCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
         getProofJwt: @escaping (
             _ credentialIssuer: String,
             _ cNonce: String?,
@@ -352,7 +352,7 @@ final class MockPreAuthFlowService: PreAuthCodeFlowService {
         ) async throws -> String,
         credentialConfigurationId: String,
         proofSigningAlgorithmsSupportedSupported: [String],
-        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)? = nil,
+        getTxCode: TxCodeCallback = nil,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse {
         didCallRequest = true
