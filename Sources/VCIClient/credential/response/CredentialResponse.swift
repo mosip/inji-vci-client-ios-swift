@@ -1,7 +1,25 @@
 import Foundation
 
 public struct CredentialResponse: Codable {
-    let credential: AnyCodable
+    public let credential: AnyCodable
+    public var credentialIssuer: String?
+    public var credentialConfigurationId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case credential
+        case credentialIssuer
+        case credentialConfigurationId
+    }
+
+    public init(
+        credential: AnyCodable,
+        credentialIssuer: String? = nil,
+        credentialConfigurationId: String? = nil
+    ) {
+        self.credential = credential
+        self.credentialIssuer = credentialIssuer
+        self.credentialConfigurationId = credentialConfigurationId
+    }
 
     public func toJsonString() throws -> String {
         let encoder = JSONEncoder()
@@ -13,6 +31,7 @@ public struct CredentialResponse: Codable {
         return jsonString
     }
 }
+
 
 public struct AnyCodable: Codable {
     var value: Any

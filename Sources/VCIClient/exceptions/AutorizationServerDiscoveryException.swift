@@ -1,6 +1,6 @@
 import Foundation
 
-class AuthServerDiscoveryException: VCIClientException {
+class AutorizationServerDiscoveryException: VCIClientException {
     init(_ message: String?) {
         super.init(
             code: "VCI-001",

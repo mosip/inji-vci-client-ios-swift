@@ -3,20 +3,35 @@ import Foundation
 public class VCIClient {
     let networkSession: NetworkManager
     let traceabilityId: String
-    let credentialOfferHandler: CredentialOfferHandler
-    let trustedIssuerHandler: TrustedIssuerHandler
-    
+    let credentialOfferFlowHandler: CredentialOfferFlowHandler
+    let trustedIssuerFlowHandler: TrustedIssuerFlowHandler
+    let issuerMetadataService: IssuerMetadataService
+    let credentialRequestFactory: CredentialRequestFactoryProtocol
 
-    public init(traceabilityId: String,
-                networkSession: NetworkManager? = nil,
-                credentialRequestFactory: CredentialRequestFactoryProtocol? = nil,
-                credentialOfferHandler: CredentialOfferHandler? = nil,
-                trustedIssuerHandler: TrustedIssuerHandler? = nil
+
+    public init(traceabilityId: String
     ) {
         self.traceabilityId = traceabilityId
+        credentialOfferFlowHandler = CredentialOfferFlowHandler()
+        trustedIssuerFlowHandler = TrustedIssuerFlowHandler()
+        issuerMetadataService = IssuerMetadataService()
+        networkSession = NetworkManager.shared
+        credentialRequestFactory = CredentialRequestFactory()
+    }
+
+    init(traceabilityId: String?,
+         networkSession: NetworkManager? = nil,
+         credentialRequestFactory: CredentialRequestFactoryProtocol? = nil,
+         credentialOfferHandler: CredentialOfferFlowHandler? = nil,
+         trustedIssuerFlowHandler: TrustedIssuerFlowHandler? = nil,
+         issuerMetadataService: IssuerMetadataService? = nil
+    ) {
+        self.traceabilityId = traceabilityId ?? ""
         self.networkSession = networkSession ?? NetworkManager.shared
-        self.credentialOfferHandler = credentialOfferHandler ?? CredentialOfferHandler()
-        self.trustedIssuerHandler = trustedIssuerHandler ?? TrustedIssuerHandler()
+        self.credentialOfferFlowHandler = credentialOfferHandler ?? CredentialOfferFlowHandler()
+        self.trustedIssuerFlowHandler = trustedIssuerFlowHandler ?? TrustedIssuerFlowHandler()
+        self.issuerMetadataService = issuerMetadataService ?? IssuerMetadataService()
+        self.credentialRequestFactory = credentialRequestFactory ?? CredentialRequestFactory()
     }
 
     private var logTag: String {
@@ -25,25 +40,22 @@ public class VCIClient {
 
     public func requestCredentialByCredentialOffer(
         credentialOffer: String,
-        clientMetadata: ClientMetaData,
-        getTxCode: ((_ inputMode: String?, _ description: String?, _ length: Int?) async throws -> String)?,
-        getProofJwt: @escaping (
-            _ accessToken: String,
-            _ cNonce: String?,
-            _ issuerMetadata: [String: Any]?,
-            _ credentialConfigurationId: String?
-        ) async throws -> String,
-        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
-        onCheckIssuerTrust: ((_ issuerMetadata: [String: Any]) async throws -> Bool)? = nil,
+        clientMetadata: ClientMetadata,
+        getTxCode: TxCodeCallback,
+        authorizeUser: @escaping AuthorizeUserCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
+        getProofJwt: @escaping ProofJwtCallback,
+        onCheckIssuerTrust: CheckIssuerTrustCallback = nil,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse? {
         do {
-            return try await credentialOfferHandler.downloadCredentials(
+            return try await credentialOfferFlowHandler.downloadCredentials(
                 credentialOffer: credentialOffer,
                 clientMetadata: clientMetadata,
                 getTxCode: getTxCode,
+                authorizeUser: authorizeUser,
+                getTokenResponse: getTokenResponse,
                 getProofJwt: getProofJwt,
-                getAuthCode: getAuthCode,
                 onCheckIssuerTrust: onCheckIssuerTrust,
                 networkSession: networkSession,
                 downloadTimeoutInMillis: downloadTimeoutInMillis
@@ -55,23 +67,27 @@ public class VCIClient {
         }
     }
 
+    public func getIssuerMetadata(credentialIssuer: String) async throws -> [String: Any] {
+        return try await issuerMetadataService.fetchAndParseIssuerMetadata(from: credentialIssuer)
+    }
+
     public func requestCredentialFromTrustedIssuer(
-        issuerMetadata: IssuerMetadata,
-        clientMetadata: ClientMetaData,
-        getProofJwt: @escaping (
-            _ accessToken: String,
-            _ cNonce: String?,
-            _ issuerMetadata: [String: Any]?,
-            _ credentialConfigurationId: String?
-        ) async throws -> String,
-        getAuthCode: @escaping (_ authorizationEndpoint: String) async throws -> String,
+        credentialIssuer: String,
+        credentialConfigurationId: String,
+        clientMetadata: ClientMetadata,
+        authorizeUser: @escaping AuthorizeUserCallback,
+        getTokenResponse: @escaping TokenResponseCallback,
+        getProofJwt: @escaping ProofJwtCallback,
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse? {
         do {
-            return try await trustedIssuerHandler.downloadCredentials(
-                issuerMetadata: issuerMetadata,
+
+            return try await trustedIssuerFlowHandler.downloadCredentials(
+                credentialIssuer: credentialIssuer,
+                credentialConfigurationId: credentialConfigurationId,
                 clientMetadata: clientMetadata,
-                getAuthCode: getAuthCode,
+                authorizeUser: authorizeUser,
+                getTokenResponse: getTokenResponse,
                 getProofJwt: getProofJwt,
                 downloadTimeoutInMillis: downloadTimeoutInMillis,
                 networkSession: networkSession
@@ -79,7 +95,10 @@ public class VCIClient {
         } catch let e as VCIClientException {
             throw e
         } catch {
-            throw VCIClientException(code: "VCI-010", message: "Unknown exception occurred")
+            throw VCIClientException(
+                code: "VCI-010",
+                message: "Unknown exception occurred"
+            )
         }
     }
 
@@ -91,7 +110,7 @@ public class VCIClient {
     ) async throws -> CredentialResponse? {
         do {
             let issuerMetadata = IssuerMetadata(
-                credentialAudience: issuerMeta.credentialAudience,
+                credentialIssuer: issuerMeta.credentialAudience,
                 credentialEndpoint: issuerMeta.credentialEndpoint,
                 credentialType: issuerMeta.credentialType,
                 context: nil,
@@ -102,7 +121,7 @@ public class VCIClient {
                 tokenEndpoint: nil,
                 scope: "openId"
             )
-            var request = try CredentialRequestFactory().createCredentialRequest(
+            var request = try credentialRequestFactory.createCredentialRequest(
                 credentialFormat: issuerMetadata.credentialFormat,
                 accessToken: accessToken,
                 issuer: issuerMetadata,

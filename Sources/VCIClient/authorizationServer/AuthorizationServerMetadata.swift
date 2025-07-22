@@ -1,6 +1,6 @@
 import Foundation
 
-struct AuthServerMetadata: Codable {
+struct AuthorizationServerMetadata: Codable {
     let issuer: String
     let grantTypesSupported: [String]?
     let tokenEndpoint: String?

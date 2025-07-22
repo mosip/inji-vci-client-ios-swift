@@ -13,7 +13,7 @@ public class CredentialOfferService {
         guard let url = URL(string: normalized),
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else {
-            throw OfferFetchFailedException("Invalid credential offer format")
+            throw CredentialOfferFetchFailedException("Invalid credential offer format")
         }
 
         let queryParams = Dictionary(uniqueKeysWithValues: queryItems.map { ($0.name, $0.value ?? "") })
@@ -23,13 +23,13 @@ public class CredentialOfferService {
         } else if let uri = queryParams["credential_offer_uri"] {
             return try await handleByReferenceOffer(url: uri)
         } else {
-            throw OfferFetchFailedException("Missing 'credential_offer' or 'credential_offer_uri'")
+            throw CredentialOfferFetchFailedException("Missing 'credential_offer' or 'credential_offer_uri'")
         }
     }
 
     func handleByValueOffer(encodedOffer: String) throws -> CredentialOffer {
         guard let decoded = encodedOffer.removingPercentEncoding else {
-            throw OfferFetchFailedException("Invalid json")
+            throw CredentialOfferFetchFailedException("Invalid json")
         }
         return try parseCredentialOffer(json: decoded)
     }
@@ -38,7 +38,7 @@ public class CredentialOfferService {
         guard let requestURL = URL(string: url),
               requestURL.scheme != nil,
               requestURL.host != nil else {
-            throw OfferFetchFailedException("Invalid credential_offer_uri")
+            throw CredentialOfferFetchFailedException("Invalid credential_offer_uri")
         }
 
         // Use your NetworkManager to send the request
@@ -49,7 +49,7 @@ public class CredentialOfferService {
         )
 
         guard !response.body.isEmpty else {
-            throw OfferFetchFailedException("Credential offer response was empty.")
+            throw CredentialOfferFetchFailedException("Credential offer response was empty.")
         }
 
         return try parseCredentialOffer(json: response.body)
@@ -57,7 +57,7 @@ public class CredentialOfferService {
 
     private func parseCredentialOffer(json: String) throws -> CredentialOffer {
         guard let data = json.data(using: .utf8) else {
-            throw OfferFetchFailedException("Invalid json")
+            throw CredentialOfferFetchFailedException("Invalid json")
         }
 
         let decoder = JSONDecoder()

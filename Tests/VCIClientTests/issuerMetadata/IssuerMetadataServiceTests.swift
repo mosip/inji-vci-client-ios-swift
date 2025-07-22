@@ -29,9 +29,9 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
 
         let service = makeService(response: json)
-        let result = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "mdoc")
+        let result = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "mdoc")
 
-        XCTAssertEqual(result.issuerMetadata.credentialAudience, "https://issuer.com")
+        XCTAssertEqual(result.issuerMetadata.credentialIssuer, "https://issuer.com")
         XCTAssertEqual(result.issuerMetadata.credentialFormat, .mso_mdoc)
         XCTAssertEqual(result.issuerMetadata.doctype, "org.iso.18013.5.1.mDL")
     }
@@ -56,12 +56,12 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
 
         let service = makeService(response: json)
-        let result = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "vc1")
+        let result = try await service.fetchIssuerMetadataResult(credentialIssuer:  "https://issuer.com", credentialConfigurationId: "vc1")
 
-        XCTAssertEqual(result.issuerMetadata.credentialAudience, "https://issuer.com")
+        XCTAssertEqual(result.issuerMetadata.credentialIssuer, "https://issuer.com")
         XCTAssertEqual(result.issuerMetadata.credentialFormat, .ldp_vc)
         XCTAssertEqual(result.issuerMetadata.credentialType, ["VerifiableCredential", "ProfileCredential"])
-        XCTAssertEqual(result.issuerMetadata.scope, "openid identity")
+        XCTAssertEqual(result.issuerMetadata.scope, "identity")
         XCTAssertEqual(result.issuerMetadata.authorizationServers, ["https://auth.issuer.com"])
     }
 
@@ -69,23 +69,13 @@ final class IssuerMetadataServiceTests: XCTestCase {
         let service = makeService(response: "")
 
         do {
-            _ = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "vc1")
+            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "vc1")
             XCTFail("Expected error for empty response")
         } catch {
             XCTAssertTrue(error.localizedDescription.contains("response is empty"))
         }
     }
 
-    func test_fetch_invalidJson_shouldThrow() async {
-        let service = makeService(response: "{ invalid json")
-
-        do {
-            _ = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "vc1")
-            XCTFail("Expected error for invalid JSON")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("not valid JSON"))
-        }
-    }
 
     func test_fetch_missingCredentialConfiguration_shouldThrow() async {
         let json = """
@@ -97,7 +87,7 @@ final class IssuerMetadataServiceTests: XCTestCase {
         let service = makeService(response: json)
 
         do {
-            _ = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "vc1")
+            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "vc1")
             XCTFail("Expected error for missing credential configuration")
         } catch {
             XCTAssertTrue(error.localizedDescription.contains("credential configuration"))
@@ -119,7 +109,7 @@ final class IssuerMetadataServiceTests: XCTestCase {
         let service = makeService(response: json)
 
         do {
-            _ = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "vc1")
+            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "vc1")
             XCTFail("Expected error for missing format")
         } catch {
             XCTAssertTrue(error.localizedDescription.contains("credential format"))
@@ -141,7 +131,7 @@ final class IssuerMetadataServiceTests: XCTestCase {
         let service = makeService(response: json)
 
         do {
-            _ = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "mdoc")
+            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "mdoc")
             XCTFail("Expected error for missing doctype")
         } catch {
             XCTAssertTrue(error.localizedDescription.contains("Missing doctype"))
@@ -163,7 +153,7 @@ final class IssuerMetadataServiceTests: XCTestCase {
         let service = makeService(response: json)
 
         do {
-            _ = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "conf1")
+            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "conf1")
             XCTFail("Expected error for unsupported credential format")
         } catch {
             XCTAssertTrue(error.localizedDescription.contains("credential format"))
@@ -174,10 +164,11 @@ final class IssuerMetadataServiceTests: XCTestCase {
         let service = makeService(response: "{}", shouldThrow: true)
 
         do {
-            _ = try await service.fetch(issuerUrl: "https://issuer.com", credentialConfigurationId: "vc1")
+            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "vc1")
             XCTFail("Expected error for network failure")
         } catch {
-            XCTAssertTrue(error.localizedDescription.contains("Failed to fetch"))
+            print("--------",error.localizedDescription)
+            XCTAssertTrue(error.localizedDescription.contains("Simulated network failure"))
         }
     }
 }

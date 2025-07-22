@@ -45,13 +45,13 @@ public class NetworkManager {
                 throw NetworkRequestFailedException("Invalid response")
             }
 
+            let body = String(data: data, encoding: .utf8) ?? ""
+            
             guard (200...299).contains(httpResponse.statusCode) else {
                 throw NetworkRequestFailedException(
-                    "HTTP \(httpResponse.statusCode): \(HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode))"
+                    "HTTP \(httpResponse.statusCode): \(HTTPURLResponse.localizedString(forStatusCode: httpResponse.statusCode)). Server response: \(body)"
                 )
             }
-
-            let body = String(data: data, encoding: .utf8) ?? ""
 
             return NetworkResponse(
                 body: body,

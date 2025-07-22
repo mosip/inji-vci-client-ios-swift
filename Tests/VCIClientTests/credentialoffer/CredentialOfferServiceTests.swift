@@ -41,7 +41,7 @@ final class CredentialOfferServiceTests: XCTestCase {
         do {
             _ = try await service.fetchCredentialOffer(invalid)
             XCTFail("Expected OfferFetchFailedException to be thrown")
-        } catch let error as OfferFetchFailedException {
+        } catch let error as CredentialOfferFetchFailedException {
             XCTAssertTrue(error.localizedDescription.contains("Invalid credential offer format"))
         } catch {
             XCTFail("Expected OfferFetchFailedException but got \(error)")
@@ -60,7 +60,7 @@ final class CredentialOfferServiceTests: XCTestCase {
         do {
             _ = try await service.fetchCredentialOffer(uri)
             XCTFail("Expected OfferFetchFailedException to be thrown")
-        } catch let error as OfferFetchFailedException {
+        } catch let error as CredentialOfferFetchFailedException {
             XCTAssertTrue(error.localizedDescription.contains("response was empty"))
         } catch {
             XCTFail("Expected OfferFetchFailedException but got \(error)")
@@ -74,7 +74,7 @@ final class CredentialOfferServiceTests: XCTestCase {
         do {
             _ = try await service.fetchCredentialOffer(noParams)
             XCTFail("Expected OfferFetchFailedException to be thrown")
-        } catch let error as OfferFetchFailedException {
+        } catch let error as CredentialOfferFetchFailedException {
             XCTAssertTrue(error.localizedDescription.contains("Missing 'credential_offer' or 'credential_offer_uri'"))
         } catch {
             XCTFail("Expected OfferFetchFailedException but got \(error)")
@@ -87,7 +87,7 @@ final class CredentialOfferServiceTests: XCTestCase {
         do {
             _ =  try await service.fetchCredentialOffer(badJson)
             XCTFail("Expected OfferFetchFailedException to be thrown")
-        } catch let error as OfferFetchFailedException {
+        } catch let error as CredentialOfferFetchFailedException {
             XCTAssertTrue(error.localizedDescription.contains("Invalid credential offer"))
         } catch {
             XCTFail("Expected OfferFetchFailedException but got \(error)")
@@ -100,7 +100,7 @@ final class CredentialOfferServiceTests: XCTestCase {
         do {
             _ = try await service.fetchCredentialOffer("invalid")
             XCTFail("Expected OfferFetchFailedException to be thrown")
-        } catch let error as OfferFetchFailedException {
+        } catch let error as CredentialOfferFetchFailedException {
             print("------",error.localizedDescription)
             XCTAssertTrue(error.localizedDescription.contains("Invalid credential offer"))
         } catch {

@@ -36,7 +36,7 @@ class LdpVcCredentialRequest: CredentialRequestProtocol {
     func generateRequestBody(proofJWT: JWTProof, issuer: IssuerMetadata) throws -> Data? {
         let credentialDefinition = CredentialDefinition(context: getIssuerContext(issuer: issuer), type: issuer.credentialType!)
 
-        let credentialRequestBody = CredentialRequestBody(
+        let credentialRequestBody = LdpCredentialRequestBody(
             format: issuer.credentialFormat,
             credential_definition: credentialDefinition,
             proof: proofJWT
@@ -55,5 +55,34 @@ class LdpVcCredentialRequest: CredentialRequestProtocol {
             return issuer.context!
         }
         return ["https://www.w3.org/2018/credentials/v1"]
+    }
+}
+
+struct LdpCredentialRequestBody: Encodable {
+    let format: CredentialFormat
+    let credential_definition: CredentialDefinition
+    let proof: JWTProof
+
+    init(format: CredentialFormat, credential_definition: CredentialDefinition, proof: JWTProof) {
+        self.format = format
+        self.credential_definition = credential_definition
+        self.proof = proof
+    }
+}
+
+
+
+struct CredentialDefinition: Codable {
+    let context: [String]?
+    let type: [String]
+
+    private enum CodingKeys: String, CodingKey {
+        case context = "@context"
+        case type
+    }
+
+    init(context: [String]? = ["https://www.w3.org/2018/credentials/v1"], type: [String]) {
+        self.context = context
+        self.type = type
     }
 }

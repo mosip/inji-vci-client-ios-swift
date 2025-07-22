@@ -1,7 +1,7 @@
 import Foundation
 
 public struct IssuerMetadata : Codable{
-    public let credentialAudience: String
+    public let credentialIssuer: String
     public let credentialEndpoint: String
     public let credentialType: [String]?
     public let context: [String]?
@@ -13,7 +13,7 @@ public struct IssuerMetadata : Codable{
     public let scope: String?
 
     public init(
-        credentialAudience: String,
+        credentialIssuer: String,
         credentialEndpoint: String,
         credentialType: [String]? = nil,
         context: [String]? = nil,
@@ -24,7 +24,7 @@ public struct IssuerMetadata : Codable{
         tokenEndpoint: String? = nil,
         scope: String = "openId"
     ) {
-        self.credentialAudience = credentialAudience
+        self.credentialIssuer = credentialIssuer
         self.credentialEndpoint = credentialEndpoint
         self.credentialType = credentialType
         self.context = context
