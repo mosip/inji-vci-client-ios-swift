@@ -1,54 +1,44 @@
 import Foundation
 
-class AuthServerResolver {
-    let authServerDiscoveryService: AuthServerDiscoveryService
-    init(authServerDiscoveryService: AuthServerDiscoveryService? = nil) {
-        self.authServerDiscoveryService = authServerDiscoveryService ?? AuthServerDiscoveryService()
+class AuthorizationServerResolver {
+    let authServerDiscoveryService: AuthorizationServerDiscoveryService
+    init(authServerDiscoveryService: AuthorizationServerDiscoveryService? = nil) {
+        self.authServerDiscoveryService = authServerDiscoveryService ?? AuthorizationServerDiscoveryService()
     }
 
     func resolveForPreAuth(
         issuerMetadata: IssuerMetadata,
         credentialOffer: CredentialOffer
-    ) async throws -> AuthServerMetadata {
+    ) async throws -> AuthorizationServerMetadata {
         let offerAuthServer = credentialOffer.grants?.preAuthorizedGrant?.authorizationServer
         return try await resolveAuthServer(
             offerGrantAuthServer: offerAuthServer,
             issuerMetadata: issuerMetadata,
             expectedGrantType: GrantType.preAuthorized.rawValue,
-            credentialIssuer: issuerMetadata.credentialAudience
+            credentialIssuer: issuerMetadata.credentialIssuer
         )
     }
-
+    
     func resolveForAuthCode(
         issuerMetadata: IssuerMetadata,
-        credentialOffer: CredentialOffer
-    ) async throws -> AuthServerMetadata {
-        let offerAuthServer = credentialOffer.grants?.authorizationCodeGrant?.authorizationServer
+        credentialOffer: CredentialOffer? = nil
+    ) async throws -> AuthorizationServerMetadata {
+        let offerAuthServer = credentialOffer?.grants?.authorizationCodeGrant?.authorizationServer
         return try await resolveAuthServer(
             offerGrantAuthServer: offerAuthServer,
             issuerMetadata: issuerMetadata,
             expectedGrantType: GrantType.authorizationCode.rawValue,
-            credentialIssuer: issuerMetadata.credentialAudience
+            credentialIssuer: issuerMetadata.credentialIssuer
         )
     }
 
-    func resolveForAuthCode(
-        issuerMetadata: IssuerMetadata
-    ) async throws -> AuthServerMetadata {
-        return try await resolveAuthServer(
-            offerGrantAuthServer: nil,
-            issuerMetadata: issuerMetadata,
-            expectedGrantType: GrantType.authorizationCode.rawValue,
-            credentialIssuer: issuerMetadata.credentialAudience
-        )
-    }
 
     private func resolveAuthServer(
         offerGrantAuthServer: String?,
         issuerMetadata: IssuerMetadata,
         expectedGrantType: String,
         credentialIssuer: String
-    ) async throws -> AuthServerMetadata {
+    ) async throws -> AuthorizationServerMetadata {
         let authServers = issuerMetadata.authorizationServers
 
         if let servers = authServers, servers.count == 1 {
@@ -81,11 +71,11 @@ class AuthServerResolver {
     private func discoverAndValidate(
         authServerUrl: String,
         expectedGrantType: String
-    ) async throws -> AuthServerMetadata {
+    ) async throws -> AuthorizationServerMetadata {
         let authServerMetadata = try await authServerDiscoveryService.discover(baseUrl: authServerUrl)
 
         if authServerMetadata.issuer != authServerUrl {
-            throw AuthServerDiscoveryException(
+            throw AutorizationServerDiscoveryException(
                 "Issuer mismatch: expected '\(authServerUrl)', got '\(authServerMetadata.issuer)'"
             )
         }
@@ -95,14 +85,14 @@ class AuthServerResolver {
 
         if !supportedGrants.contains(expectedGrantType),
            expectedGrantType != GrantType.preAuthorized.rawValue {
-            throw AuthServerDiscoveryException(
+            throw AutorizationServerDiscoveryException(
                 "Grant type '\(expectedGrantType)' not supported by auth server."
             )
         }
 
         if expectedGrantType == GrantType.authorizationCode.rawValue,
            authServerMetadata.authorizationEndpoint?.isEmpty ?? true {
-            throw AuthServerDiscoveryException(
+            throw AutorizationServerDiscoveryException(
                 "Missing authorization_endpoint for authorization_code flow."
             )
         }
@@ -113,8 +103,8 @@ class AuthServerResolver {
     private func resolveFirstValid(
         authServers: [String],
         expectedGrantType: String
-    ) async throws -> AuthServerMetadata {
-        try await withThrowingTaskGroup(of: AuthServerMetadata?.self) { group in
+    ) async throws -> AuthorizationServerMetadata {
+        try await withThrowingTaskGroup(of: AuthorizationServerMetadata?.self) { group in
             for url in authServers {
                 group.addTask {
                     try? await self.discoverAndValidate(authServerUrl: url, expectedGrantType: expectedGrantType)
@@ -128,7 +118,7 @@ class AuthServerResolver {
                 }
             }
 
-            throw AuthServerDiscoveryException(
+            throw AutorizationServerDiscoveryException(
                 "None of the authorization servers responded with valid metadata."
             )
         }

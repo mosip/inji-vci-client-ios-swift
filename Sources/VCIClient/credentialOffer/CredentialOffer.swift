@@ -13,7 +13,7 @@ public struct CredentialOffer: Codable {
 }
 
 struct CredentialOfferGrants: Codable {
-    let preAuthorizedGrant: PreAuthorizedCodeGrant?
+    let preAuthorizedGrant: PreAuthCodeGrant?
     let authorizationCodeGrant: AuthorizationCodeGrant?
 
     enum CodingKeys: String, CodingKey {
@@ -22,14 +22,14 @@ struct CredentialOfferGrants: Codable {
     }
 }
 
-struct PreAuthorizedCodeGrant: Codable {
-    let preAuthorizedCode: String
+struct PreAuthCodeGrant: Codable {
+    let preAuthCode: String
     let txCode: TxCode?
     let authorizationServer: String?
     let interval: Int?
 
     enum CodingKeys: String, CodingKey {
-        case preAuthorizedCode = "pre-authorized_code"
+        case preAuthCode = "pre-authorized_code"
         case txCode = "tx_code"
         case authorizationServer = "authorization_server"
         case interval

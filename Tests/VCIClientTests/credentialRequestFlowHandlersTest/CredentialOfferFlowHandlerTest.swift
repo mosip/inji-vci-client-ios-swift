@@ -1,11 +1,11 @@
 import XCTest
 @testable import VCIClient
-final class CredentialOfferHandlerTests: XCTestCase {
+final class CredentialOfferFlowHandlerTests: XCTestCase {
 
     private func makeMinimalIssuerMetadataResult() -> IssuerMetadataResult {
         return IssuerMetadataResult(
             issuerMetadata: IssuerMetadata(
-                credentialAudience: "aud",
+                credentialIssuer: "aud",
                 credentialEndpoint: "https://example.com",
                 credentialFormat: .ldp_vc
             ),
@@ -14,7 +14,7 @@ final class CredentialOfferHandlerTests: XCTestCase {
     }
 
     private func makeMinimalCredentialResponse() -> CredentialResponse {
-        return CredentialResponse(credential: .init("mock-credential"))
+        return CredentialResponse(credential: .init("mock-credential"), credentialIssuer: "mock",credentialConfigurationId: "mcok-id")
     }
 
     func testPreAuthorizedFlow_callsPreAuthFlowService() async throws {
@@ -22,7 +22,7 @@ final class CredentialOfferHandlerTests: XCTestCase {
         offerService.offerToReturn = CredentialOffer(
             credentialIssuer: "https://issuer.com",
             credentialConfigurationIds: ["config"],
-            grants: CredentialOfferGrants(preAuthorizedGrant: PreAuthorizedCodeGrant(preAuthorizedCode: "test", txCode: nil, authorizationServer: nil, interval: nil), authorizationCodeGrant: nil)
+            grants: CredentialOfferGrants(preAuthorizedGrant: PreAuthCodeGrant(preAuthCode: "test", txCode: nil, authorizationServer: nil, interval: nil), authorizationCodeGrant: nil)
         )
 
         let issuerService = MockIssuerMetadataService()
@@ -31,7 +31,7 @@ final class CredentialOfferHandlerTests: XCTestCase {
         let preAuthFlowService = MockPreAuthFlowService()
         preAuthFlowService.responseToReturn = makeMinimalCredentialResponse()
 
-        let handler = CredentialOfferHandler(
+        let handler = CredentialOfferFlowHandler(
             credentialOfferService: offerService,
             issuerMetadataService: issuerService,
             preAuthFlowService: preAuthFlowService,
@@ -39,11 +39,14 @@ final class CredentialOfferHandlerTests: XCTestCase {
         )
 
         let result = try await handler.downloadCredentials(
+            
             credentialOffer: "offer",
-            clientMetadata: ClientMetaData(clientId: "id", redirectUri: "uri"),
+            clientMetadata: ClientMetadata(clientId: "id", redirectUri: "uri"),
             getTxCode: { _,_,_ in "tx-code" },
-            getProofJwt: { _, _, _, _ in "jwt" },
-            getAuthCode: { _ in "auth-code" }
+            authorizeUser: {_ in "auth-code"},
+            getTokenResponse: {_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+            getProofJwt: { _, _, _ in "jwt" }
+        
         )
 
         
@@ -64,7 +67,7 @@ final class CredentialOfferHandlerTests: XCTestCase {
         let authCodeFlowService = MockAuthorizationCodeFlowService()
         authCodeFlowService.responseToReturn = makeMinimalCredentialResponse()
 
-        let handler = CredentialOfferHandler(
+        let handler = CredentialOfferFlowHandler(
             credentialOfferService: offerService,
             issuerMetadataService: issuerService,
             preAuthFlowService: MockPreAuthFlowService(),
@@ -72,11 +75,13 @@ final class CredentialOfferHandlerTests: XCTestCase {
         )
 
         let result = try await handler.downloadCredentials(
+            
             credentialOffer: "offer",
-            clientMetadata: ClientMetaData(clientId: "id", redirectUri: "uri"),
+            clientMetadata: ClientMetadata(clientId: "id", redirectUri: "uri"),
             getTxCode: { _,_,_ in "tx-code" },
-            getProofJwt: { _, _, _, _ in "jwt" },
-            getAuthCode: { _ in "auth-code" }
+            authorizeUser: {_ in "auth-code"},
+            getTokenResponse: {_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+            getProofJwt: { _, _, _ in "jwt" }
         )
 
        
@@ -88,7 +93,7 @@ final class CredentialOfferHandlerTests: XCTestCase {
         offerService.offerToReturn = CredentialOffer(
             credentialIssuer: "https://issuer.com",
             credentialConfigurationIds: ["config"],
-            grants: CredentialOfferGrants(preAuthorizedGrant: PreAuthorizedCodeGrant(preAuthorizedCode: "test", txCode: nil, authorizationServer: nil, interval: nil), authorizationCodeGrant: nil)
+            grants: CredentialOfferGrants(preAuthorizedGrant: PreAuthCodeGrant(preAuthCode: "test", txCode: nil, authorizationServer: nil, interval: nil), authorizationCodeGrant: nil)
         )
 
         let issuerService = MockIssuerMetadataService()
@@ -97,7 +102,7 @@ final class CredentialOfferHandlerTests: XCTestCase {
         let preAuthFlowService = MockPreAuthFlowService()
         preAuthFlowService.responseToReturn = makeMinimalCredentialResponse()
 
-        let handler = CredentialOfferHandler(
+        let handler = CredentialOfferFlowHandler(
             credentialOfferService: offerService,
             issuerMetadataService: issuerService,
             preAuthFlowService: preAuthFlowService,
@@ -106,15 +111,17 @@ final class CredentialOfferHandlerTests: XCTestCase {
 
         do {
             _ = try await handler.downloadCredentials(
+                
                 credentialOffer: "offer",
-                clientMetadata: ClientMetaData(clientId: "id", redirectUri: "uri"),
+                clientMetadata: ClientMetadata(clientId: "id", redirectUri: "uri"),
                 getTxCode: { _,_,_ in "tx-code" },
-                getProofJwt: { _, _, _, _ in "jwt" },
-                getAuthCode: { _ in "auth-code" },
-                onCheckIssuerTrust: { _ in false }
+                authorizeUser: {_ in "auth-code"},
+                getTokenResponse: {_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "jwt" },
+                onCheckIssuerTrust: {_,_ in false}
             )
             XCTFail("Expected OfferFetchFailedException")
-        } catch let error as OfferFetchFailedException {
+        } catch let error as CredentialOfferFetchFailedException {
             XCTAssertTrue(error.message.contains("Issuer not trusted by user"))
         } catch {
             XCTFail("Unexpected error: \(error)")
@@ -132,7 +139,7 @@ final class CredentialOfferHandlerTests: XCTestCase {
         let issuerService = MockIssuerMetadataService()
         issuerService.resultToReturn = makeMinimalIssuerMetadataResult()
 
-        let handler = CredentialOfferHandler(
+        let handler = CredentialOfferFlowHandler(
             credentialOfferService: offerService,
             issuerMetadataService: issuerService,
             preAuthFlowService: MockPreAuthFlowService(),
@@ -141,17 +148,66 @@ final class CredentialOfferHandlerTests: XCTestCase {
 
         do {
             _ = try await handler.downloadCredentials(
+                
                 credentialOffer: "offer",
-                clientMetadata: ClientMetaData(clientId: "id", redirectUri: "uri"),
+                clientMetadata: ClientMetadata(clientId: "id", redirectUri: "uri"),
                 getTxCode: { _,_,_ in "tx-code" },
-                getProofJwt: { _, _, _, _ in "jwt" },
-                getAuthCode: { _ in "auth-code" }
+                authorizeUser: {_ in "auth-code"},
+                getTokenResponse: {_ in TokenResponse(accessToken: "mock", tokenType: "Bearer")},
+                getProofJwt: { _, _, _ in "jwt" }
             )
             XCTFail("Expected OfferFetchFailedException")
-        } catch let error as OfferFetchFailedException {
+        } catch let error as CredentialOfferFetchFailedException {
             XCTAssertTrue(error.message.contains("supported grant type"))
         } catch {
             XCTFail("Unexpected error: \(error)")
         }
     }
+    
+    func testBatchCredentialOffer_throwsError() async {
+        let offerService = MockCredentialOfferService()
+        offerService.offerToReturn = CredentialOffer(
+            credentialIssuer: "https://issuer.com",
+            credentialConfigurationIds: ["config1", "config2"],
+            grants: CredentialOfferGrants(
+                preAuthorizedGrant: PreAuthCodeGrant(
+                    preAuthCode: "test",
+                    txCode: nil,
+                    authorizationServer: nil,
+                    interval: nil
+                ),
+                authorizationCodeGrant: nil
+            )
+        )
+
+        let issuerService = MockIssuerMetadataService()
+        issuerService.resultToReturn = makeMinimalIssuerMetadataResult()
+
+        let preAuthFlowService = MockPreAuthFlowService()
+        preAuthFlowService.responseToReturn = makeMinimalCredentialResponse()
+
+        let handler = CredentialOfferFlowHandler(
+            credentialOfferService: offerService,
+            issuerMetadataService: issuerService,
+            preAuthFlowService: preAuthFlowService,
+            authorizationCodeFlowService: MockAuthorizationCodeFlowService()
+        )
+
+        do {
+            _ = try await handler.downloadCredentials(
+                credentialOffer: "offer",
+                clientMetadata: ClientMetadata(clientId: "id", redirectUri: "uri"),
+                getTxCode: { _, _, _ in "tx-code" },
+                authorizeUser: { _ in "auth-code" },
+                getTokenResponse: { _ in TokenResponse(accessToken: "mock", tokenType: "Bearer") },
+                getProofJwt: { _, _, _ in "jwt" }
+            )
+            XCTFail("Expected CredentialOfferFetchFailedException for batch credential offer")
+        } catch let error as DownloadFailedException {
+            XCTAssertTrue(error.message.contains("Batch credential request is not supported"))
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
+
 }

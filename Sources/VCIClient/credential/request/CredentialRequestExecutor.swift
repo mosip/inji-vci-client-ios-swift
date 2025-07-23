@@ -1,19 +1,19 @@
 import Foundation
 
 class CredentialRequestExecutor {
-    
     private let factory: CredentialRequestFactoryProtocol
 
-        init(factory: CredentialRequestFactoryProtocol = CredentialRequestFactory()) {
-            self.factory = factory
-        }
-    
+    init(factory: CredentialRequestFactoryProtocol = CredentialRequestFactory()) {
+        self.factory = factory
+    }
+
     private var logTag: String {
-           Util.getLogTag(className: String(describing: type(of: self)))
-       }
+        Util.getLogTag(className: String(describing: type(of: self)))
+    }
 
     func requestCredential(
         issuerMetadata: IssuerMetadata,
+        credentialConfigurationId: String,
         proof: Proof,
         accessToken: String,
         timeoutInMillis: Int64 = 10000,
@@ -35,9 +35,11 @@ class CredentialRequestExecutor {
             print("\(logTag) Credential downloaded successfully.")
 
             if !responseBody.isEmpty {
-                guard let result = try JsonUtils.deserialize(responseBody, as: CredentialResponse.self) else {
+                guard var result = try JsonUtils.deserialize(responseBody, as: CredentialResponse.self) else {
                     throw DownloadFailedException("Failed to parse credential response.")
                 }
+                result.credentialConfigurationId = credentialConfigurationId
+                result.credentialIssuer = issuerMetadata.credentialIssuer
                 return result
             }
 
