@@ -14,7 +14,7 @@ let package = Package(
             targets: ["VCIClient"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/abhip2565/SwiftCBOR", exact: "0.1.0"),
+        .package(url: "https://github.com/abhip2565/SwiftCBOR", exact: "0.5.0"),
     ],
     targets: [
         .target(
