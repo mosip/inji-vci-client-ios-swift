@@ -25,6 +25,10 @@ class CredentialRequestFactory: CredentialRequestFactoryProtocol {
             return try validateAndConstructCredentialRequest(credentialRequest: MsoMdocVcCredentialRequest(accessToken: accessToken,
                                                                                                            issuerMetaData: issuer,
                                                                                                            proof: proofJwt as? JWTProof ?? JWTProof(jwt: "")))
+        case .vc_sd_jwt:
+            return try validateAndConstructCredentialRequest(credentialRequest: SdJwtCredentialRequest(accessToken: accessToken,
+                                                                                                           issuerMetaData: issuer,
+                                                                                                           proof: proofJwt as? JWTProof ?? JWTProof(jwt: "")))
         }
     }
 

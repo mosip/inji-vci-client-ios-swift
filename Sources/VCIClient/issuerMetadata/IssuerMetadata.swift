@@ -10,6 +10,7 @@ public struct IssuerMetadata : Codable{
     public let claims: [String: AnyCodable]?
     public let authorizationServers: [String]?
     public let tokenEndpoint: String?
+    public let vct: String?
     public let scope: String?
 
     public init(
@@ -22,6 +23,7 @@ public struct IssuerMetadata : Codable{
         claims: [String: AnyCodable]? = nil,
         authorizationServers: [String]? = nil,
         tokenEndpoint: String? = nil,
+        vct: String? = nil,
         scope: String = "openId"
     ) {
         self.credentialIssuer = credentialIssuer
@@ -33,6 +35,7 @@ public struct IssuerMetadata : Codable{
         self.claims = claims
         self.authorizationServers = authorizationServers
         self.tokenEndpoint = tokenEndpoint
+        self.vct = vct
         self.scope = scope
     }
 }
