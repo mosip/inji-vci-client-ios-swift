@@ -20,10 +20,6 @@ class SdJwtCredentialRequest: CredentialRequestProtocol {
     }
 
     func constructRequest() throws -> URLRequest {
-        guard issuerMetaData.credentialFormat == .vc_sd_jwt else {
-            throw DownloadFailedException("Unsupported format: only sd_jwt_vc is handled")
-        }
-
         guard let url = URL(string: issuerMetaData.credentialEndpoint) else {
             throw DownloadFailedException("Invalid credential endpoint URL")
         }

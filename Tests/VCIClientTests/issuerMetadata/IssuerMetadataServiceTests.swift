@@ -171,4 +171,96 @@ final class IssuerMetadataServiceTests: XCTestCase {
             XCTAssertTrue(error.localizedDescription.contains("Simulated network failure"))
         }
     }
+    
+    func testFetch_shouldReturnSdJwtMetadata_whenValidJsonIsProvided() async throws {
+        let json = """
+        {
+          "credential_issuer": "https://issuer.com",
+          "credential_endpoint": "https://issuer.com/credential",
+          "authorization_servers": ["https://auth.issuer.com"],
+          "credential_configurations_supported": {
+            "vc_sd": {
+              "format": "vc+sd-jwt",
+              "vct": "IdentityCredential",
+              "scope": "identity",
+              "claims": {
+                "given_name": {
+                  "display": [
+                    {
+                      "name": "Given Name",
+                      "locale": "en-US"
+                    },
+                    {
+                      "name": "Vorname",
+                      "locale": "de-DE"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+        """
+
+        let service = makeService(response: json)
+        let result = try await service.fetchIssuerMetadataResult(
+            credentialIssuer: "https://issuer.com",
+            credentialConfigurationId: "vc_sd"
+        )
+
+        let metadata = result.issuerMetadata
+        XCTAssertEqual(metadata.credentialIssuer, "https://issuer.com")
+        XCTAssertEqual(metadata.credentialEndpoint, "https://issuer.com/credential")
+        XCTAssertEqual(metadata.credentialFormat, .vc_sd_jwt)
+        XCTAssertEqual(metadata.vct, "IdentityCredential")
+        XCTAssertEqual(metadata.scope, "identity")
+        XCTAssertEqual(metadata.authorizationServers, ["https://auth.issuer.com"])
+
+        
+        let givenNameClaim = metadata.claims?["given_name"]?.value as? [String: Any]
+        XCTAssertNotNil(givenNameClaim)
+        let displayArray = givenNameClaim?["display"] as? [[String: Any]]
+        XCTAssertEqual(displayArray?.count, 2)
+        XCTAssertEqual(displayArray?.first?["name"] as? String, "Given Name")
+        XCTAssertEqual(displayArray?.first?["locale"] as? String, "en-US")
+    }
+    
+    func testFetch_shouldThrow_whenVctIsMissingInSdJwtConfiguration() async {
+        let json = """
+        {
+          "credential_issuer": "https://issuer.com",
+          "credential_endpoint": "https://issuer.com/credential",
+          "credential_configurations_supported": {
+            "vc_sd": {
+              "format": "vc+sd-jwt",
+              "scope": "identity",
+              "claims": {
+                "given_name": {
+                  "display": [
+                    {
+                      "name": "Given Name",
+                      "locale": "en-US"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+        """
+
+        let service = makeService(response: json)
+
+        do {
+            _ = try await service.fetchIssuerMetadataResult(
+                credentialIssuer: "https://issuer.com",
+                credentialConfigurationId: "vc_sd"
+            )
+            XCTFail("Expected IssuerMetadataFetchException due to missing vct")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("Missing vct"), "Unexpected error: \(error.localizedDescription)")
+        }
+    }
+
+
 }
