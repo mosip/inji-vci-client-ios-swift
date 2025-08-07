@@ -15,21 +15,21 @@ class CredentialRequestFactory: CredentialRequestFactoryProtocol {
         accessToken: String,
         issuer: IssuerMetadata,
         proofJwt: Proof) throws -> URLRequest {
-        switch credentialFormat {
-        case .ldp_vc:
-            return try validateAndConstructCredentialRequest(credentialRequest: LdpVcCredentialRequest(
-                accessToken: accessToken,
-                issuerMetaData: issuer,
-                proof: proofJwt as? JWTProof ?? JWTProof(jwt: "")))
-        case .mso_mdoc:
-            return try validateAndConstructCredentialRequest(credentialRequest: MsoMdocVcCredentialRequest(accessToken: accessToken,
+            switch credentialFormat {
+            case .ldp_vc:
+                return try validateAndConstructCredentialRequest(credentialRequest: LdpVcCredentialRequest(
+                    accessToken: accessToken,
+                    issuerMetaData: issuer,
+                    proof: proofJwt as? JWTProof ?? JWTProof(jwt: "")))
+            case .mso_mdoc:
+                return try validateAndConstructCredentialRequest(credentialRequest: MsoMdocVcCredentialRequest(accessToken: accessToken,
+                                                                                                               issuerMetaData: issuer,
+                                                                                                               proof: proofJwt as? JWTProof ?? JWTProof(jwt: "")))
+            case .vc_sd_jwt,.dc_sd_jwt:
+                return try validateAndConstructCredentialRequest(credentialRequest: SdJwtCredentialRequest(accessToken: accessToken,
                                                                                                            issuerMetaData: issuer,
                                                                                                            proof: proofJwt as? JWTProof ?? JWTProof(jwt: "")))
-        case .vc_sd_jwt:
-            return try validateAndConstructCredentialRequest(credentialRequest: SdJwtCredentialRequest(accessToken: accessToken,
-                                                                                                           issuerMetaData: issuer,
-                                                                                                           proof: proofJwt as? JWTProof ?? JWTProof(jwt: "")))
-        }
+            }
     }
 
     func validateAndConstructCredentialRequest(credentialRequest: CredentialRequestProtocol) throws -> URLRequest {

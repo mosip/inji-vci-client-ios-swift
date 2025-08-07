@@ -85,4 +85,52 @@ final class SdJwtCredentialRequestTests: XCTestCase {
         XCTAssertFalse(result.isValid)
         XCTAssertEqual(result.invalidFields, ["vct"])
     }
+    
+    func testConstructRequest_shouldWorkForBothSdJwtFormats() throws {
+        for format in [CredentialFormat.vc_sd_jwt, CredentialFormat.dc_sd_jwt] {
+            let issuer = IssuerMetadata(
+                credentialIssuer: "https://issuer.com",
+                credentialEndpoint: "https://issuer.com/credential",
+                credentialFormat: format,
+                claims: ["field": AnyCodable("value")],
+                vct: "SomeCredential"
+            )
+            
+            let request = SdJwtCredentialRequest(
+                accessToken: accessToken,
+                issuerMetaData: issuer,
+                proof: proofJWT
+            )
+            
+            let httpRequest = try request.constructRequest()
+
+            XCTAssertEqual(httpRequest.httpMethod, "POST")
+            XCTAssertEqual(httpRequest.url?.absoluteString, "https://issuer.com/credential")
+            
+            
+            let headers = httpRequest.allHTTPHeaderFields
+            XCTAssertEqual(headers?["Content-Type"], "application/json")
+            XCTAssertEqual(headers?["Authorization"], "Bearer \(accessToken)")
+            XCTAssertEqual(headers?.count, 2)
+
+            
+            guard let body = httpRequest.httpBody else {
+                return XCTFail("Missing HTTP body for format \(format)")
+            }
+
+            let json = try JSONSerialization.jsonObject(with: body, options: []) as? [String: Any]
+            XCTAssertEqual(json?["vct"] as? String, "SomeCredential")
+            
+            let proof = json?["proof"] as? [String: Any]
+            XCTAssertEqual(proof?["jwt"] as? String, "xxxx.yyyy.zzzz")
+
+            let claims = json?["claims"] as? [String: Any]
+            XCTAssertEqual(claims?["field"] as? String, "value")
+            
+            let expectedFormatValue = (format == .vc_sd_jwt) ? "vc+sd-jwt" : "dc+sd-jwt"
+                        XCTAssertEqual(json?["format"] as? String, expectedFormatValue)
+        }
+    }
+
+
 }

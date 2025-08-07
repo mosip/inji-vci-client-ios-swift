@@ -83,7 +83,7 @@ class IssuerMetadataService {
             guard let doctype = credentialType["doctype"] as? String else {
                 throw IssuerMetadataFetchException("Missing doctype")
             }
-
+            
             let claims = credentialType["claims"] as? [String: Any]
             return IssuerMetadata(
                 credentialIssuer: credentialIssuer,
@@ -94,7 +94,7 @@ class IssuerMetadataService {
                 authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String],
                 scope: scope
             )
-
+            
         case .ldp_vc:
             let definition = credentialType["credential_definition"] as? [String: Any] ?? [:]
             let types = definition["type"] as? [String]
@@ -108,17 +108,18 @@ class IssuerMetadataService {
                 authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String],
                 scope: scope
             )
-
-        case .vc_sd_jwt:
+            
+        case .vc_sd_jwt, .dc_sd_jwt:
             guard let vct = credentialType["vct"] as? String else {
                 throw IssuerMetadataFetchException("Missing vct in sd_jwt_vc configuration")
             }
-
+            
             let claims = credentialType["claims"] as? [String: Any]
+            
             return IssuerMetadata(
                 credentialIssuer: credentialIssuer,
                 credentialEndpoint: credentialEndpoint,
-                credentialFormat: .vc_sd_jwt,
+                credentialFormat: format,
                 claims: claims?.mapValues { AnyCodable($0) },
                 authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String],
                 vct: vct,
