@@ -70,6 +70,10 @@ public class VCIClient {
     public func getIssuerMetadata(credentialIssuer: String) async throws -> [String: Any] {
         return try await issuerMetadataService.fetchAndParseIssuerMetadata(from: credentialIssuer)
     }
+    
+    public func getIssuerMetadataCredentialConfigurationsSupported(credentialIssuer: String) async throws -> [String:Any]{
+        return try await issuerMetadataService.fetchCredentialConfigurationsSupported(from: credentialIssuer)
+    }
 
     public func requestCredentialFromTrustedIssuer(
         credentialIssuer: String,

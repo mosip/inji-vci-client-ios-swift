@@ -227,7 +227,48 @@ final class VCIClientTests: XCTestCase {
             XCTFail("Unexpected error type: \(error)")
         }
     }
+    
+    func testFetchCredentialConfigurationsSupported_success() async throws {
+        let mockService = MockIssuerMetadataService(session: MockNetworkManager())
+        mockService.configurationsToReturn = [
+            "vc1": ["format": "ldp_vc"],
+            "vc2": ["format": "mso_mdoc", "doctype": "org.iso.18013.5.1.mDL"]
+        ]
+
+        let client = VCIClient(
+            traceabilityId: "test",
+            issuerMetadataService: mockService
+        )
+
+        let configs = try await client.getIssuerMetadataCredentialConfigurationsSupported(
+            credentialIssuer: "https://issuer.example.com"
+        )
+
+        XCTAssertEqual(configs.count, 2)
+        XCTAssertEqual((configs["vc1"] as? [String: Any])?["format"] as? String, "ldp_vc")
+        XCTAssertEqual((configs["vc2"] as? [String: Any])?["doctype"] as? String, "org.iso.18013.5.1.mDL")
+    }
 
 
+    func testFetchCredentialConfigurationsSupported_failure_shouldThrow() async {
+        let mockService = MockIssuerMetadataService(session: MockNetworkManager())
+        mockService.shouldThrow = true
+
+        let client = VCIClient(
+            traceabilityId: "test",
+            issuerMetadataService: mockService
+        )
+
+        do {
+            _ = try await client.getIssuerMetadataCredentialConfigurationsSupported(
+                credentialIssuer: "https://issuer.example.com"
+            )
+            XCTFail("Expected IssuerMetadataFetchException")
+        } catch is IssuerMetadataFetchException {
+           
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
+        }
+    }
 
 }

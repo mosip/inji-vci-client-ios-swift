@@ -14,15 +14,7 @@ class IssuerMetadataService {
         credentialIssuer: String,
         credentialConfigurationId: String
     ) async throws -> IssuerMetadataResult {
-        let rawIssuerMetadata: [String: Any]
-
-        if let cached = cachedRawMetadata[credentialIssuer] {
-            rawIssuerMetadata = cached
-        } else {
-            let fetched = try await fetchAndParseIssuerMetadata(from: credentialIssuer)
-            cachedRawMetadata[credentialIssuer] = fetched
-            rawIssuerMetadata = fetched
-        }
+        let rawIssuerMetadata: [String: Any] = try await getOrFetchRawIssuerMetadata(for: credentialIssuer)
 
         let resolvedIssuerMetadata = try resolveMetadata(
             credentialConfigurationId: credentialConfigurationId,
@@ -57,6 +49,38 @@ class IssuerMetadataService {
         return jsonObject
     }
 
+    func fetchCredentialConfigurationsSupported(from credentialIssuer: String) async throws -> [String: Any] {
+        let rawIssuerMetadata: [String: Any] = try await fetchAndParseIssuerMetadata(from: credentialIssuer)
+
+        guard let configurations = rawIssuerMetadata["credential_configurations_supported"] as? [String: Any] else {
+            throw IssuerMetadataFetchException("Missing or invalid 'credential_configurations_supported' in issuer metadata.")
+        }
+
+        if configurations.isEmpty {
+            throw IssuerMetadataFetchException("'credential_configurations_supported' is empty.")
+        }
+
+        for (configId, config) in configurations {
+            guard let configDict = config as? [String: Any] else {
+                throw IssuerMetadataFetchException("Invalid configuration format for '\(configId)'")
+            }
+            if configDict["format"] == nil {
+                throw IssuerMetadataFetchException("Missing 'format' in configuration '\(configId)'")
+            }
+        }
+
+        return configurations
+    }
+
+    private func getOrFetchRawIssuerMetadata(for credentialIssuer: String) async throws -> [String: Any] {
+        if let cachedIssuerMetadata = cachedRawMetadata[credentialIssuer] {
+            return cachedIssuerMetadata
+        }
+        let fetchedIssuerMetadata = try await fetchAndParseIssuerMetadata(from: credentialIssuer)
+        cachedRawMetadata[credentialIssuer] = fetchedIssuerMetadata
+        return fetchedIssuerMetadata
+    }
+
     private func resolveMetadata(credentialConfigurationId: String, rawIssuerMetadata: [String: Any]) throws -> IssuerMetadata {
         guard let configurations = rawIssuerMetadata["credential_configurations_supported"] as? [String: Any],
               let credentialType = configurations[credentialConfigurationId] as? [String: Any] else {
@@ -83,7 +107,7 @@ class IssuerMetadataService {
             guard let doctype = credentialType["doctype"] as? String else {
                 throw IssuerMetadataFetchException("Missing doctype")
             }
-            
+
             let claims = credentialType["claims"] as? [String: Any]
             return IssuerMetadata(
                 credentialIssuer: credentialIssuer,
@@ -94,7 +118,7 @@ class IssuerMetadataService {
                 authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String],
                 scope: scope
             )
-            
+
         case .ldp_vc:
             let definition = credentialType["credential_definition"] as? [String: Any] ?? [:]
             let types = definition["type"] as? [String]
@@ -108,14 +132,14 @@ class IssuerMetadataService {
                 authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String],
                 scope: scope
             )
-            
+
         case .vc_sd_jwt, .dc_sd_jwt:
             guard let vct = credentialType["vct"] as? String else {
                 throw IssuerMetadataFetchException("Missing vct in sd_jwt_vc configuration")
             }
-            
+
             let claims = credentialType["claims"] as? [String: Any]
-            
+
             return IssuerMetadata(
                 credentialIssuer: credentialIssuer,
                 credentialEndpoint: credentialEndpoint,

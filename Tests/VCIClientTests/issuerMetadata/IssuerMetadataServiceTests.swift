@@ -346,7 +346,96 @@ final class IssuerMetadataServiceTests: XCTestCase {
             XCTAssertTrue(error.localizedDescription.contains("Missing vct"), "Unexpected error: \(error.localizedDescription)")
         }
     }
+    
+    func test_fetchCredentialConfigurationsSupported_success() async throws {
+        let json = """
+        {
+          "credential_configurations_supported": {
+            "vc1": {
+              "format": "ldp_vc"
+            },
+            "vc2": {
+              "format": "mso_mdoc",
+              "doctype": "org.iso.18013.5.1.mDL"
+            }
+          }
+        }
+        """
+        let service = makeService(response: json)
+        let configs = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
+        
+        XCTAssertEqual(configs.count, 2)
+        XCTAssertNotNil(configs["vc1"])
+        XCTAssertEqual((configs["vc1"] as? [String: Any])?["format"] as? String, "ldp_vc")
+    }
 
+    func test_fetchCredentialConfigurationsSupported_missingBlock_shouldThrow() async {
+        let json = """
+        {
+          "credential_issuer": "https://issuer.com"
+        }
+        """
+        let service = makeService(response: json)
 
+        do {
+            _ = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
+            XCTFail("Expected error for missing credential_configurations_supported")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("credential_configurations_supported"))
+        }
+    }
 
+    func test_fetchCredentialConfigurationsSupported_emptyBlock_shouldThrow() async {
+        let json = """
+        {
+          "credential_configurations_supported": {}
+        }
+        """
+        let service = makeService(response: json)
+
+        do {
+            _ = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
+            XCTFail("Expected error for empty credential_configurations_supported")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("empty"))
+        }
+    }
+
+    func test_fetchCredentialConfigurationsSupported_invalidConfigStructure_shouldThrow() async {
+        let json = """
+        {
+          "credential_configurations_supported": {
+            "vc1": "not a dictionary"
+          }
+        }
+        """
+        let service = makeService(response: json)
+
+        do {
+            _ = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
+            XCTFail("Expected error for invalid configuration format")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("Invalid configuration format"))
+        }
+    }
+
+    func test_fetchCredentialConfigurationsSupported_missingFormat_shouldThrow() async {
+        let json = """
+        {
+          "credential_configurations_supported": {
+            "vc1": {
+              "scope": "identity"
+            }
+          }
+        }
+        """
+        let service = makeService(response: json)
+
+        do {
+            _ = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
+            XCTFail("Expected error for missing format")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("Missing 'format'"))
+        }
+    }
 }
