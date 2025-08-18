@@ -240,7 +240,7 @@ final class VCIClientTests: XCTestCase {
             issuerMetadataService: mockService
         )
 
-        let configs = try await client.getIssuerMetadataCredentialConfigurationsSupported(
+        let configs = try await client.getCredentialConfigurationsSupported(
             credentialIssuer: "https://issuer.example.com"
         )
 
@@ -260,7 +260,7 @@ final class VCIClientTests: XCTestCase {
         )
 
         do {
-            _ = try await client.getIssuerMetadataCredentialConfigurationsSupported(
+            _ = try await client.getCredentialConfigurationsSupported(
                 credentialIssuer: "https://issuer.example.com"
             )
             XCTFail("Expected IssuerMetadataFetchException")
