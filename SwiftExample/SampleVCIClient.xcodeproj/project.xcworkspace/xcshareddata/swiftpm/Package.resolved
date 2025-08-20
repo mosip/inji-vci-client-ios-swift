@@ -1,13 +1,13 @@
 {
-  "originHash" : "f097fe74356f0ea8e69877bcb51530c360d5da50bfd86f7f2ce7b7f7f5695bfa",
+  "originHash" : "b7ab986a4b098163059b70fce3b429a4d88bcff2de1b19f8d9cc142125deb27d",
   "pins" : [
     {
       "identity" : "inji-vci-client-ios-swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mosip/inji-vci-client-ios-swift/",
+      "location" : "https://github.com/tw-mosip/inji-vci-client-ios-swift/",
       "state" : {
-        "branch" : "release-0.4.x",
-        "revision" : "980b1ea662a6f46b9a3460283cbffc4cd345cb3b"
+        "branch" : "injimob-3456",
+        "revision" : "693b3edf5e96128d8495821fdae71454dd53d4ae"
       }
     },
     {

@@ -15,19 +15,19 @@ class VCIClientWrapper {
 
                 let credentialResponse = try await client.requestCredentialByCredentialOffer(
                     credentialOffer: scanned,
-                    clientMetadata: ClientMetaData(clientId: "wallet", redirectUri: "https://sampleApp"),
+                    clientMetadata: ClientMetadata(clientId: "wallet", redirectUri: "https://sampleApp"),
                     getTxCode: nil,
-                    getProofJwt: { accessToken, cNonce, issuerMetadata, configId in
-                        self.signProofJWT(
-                            accessToken: accessToken,
-                            cNonce: cNonce,
-                            issuer: issuerMetadata?["credential_issuer"] as? String ?? "https://default-issuer",
-                            credentialConfigurationId: configId, isTrustedIssuer: false
-                        )
-                    },
-                    getAuthCode: { _ in
-                        // Replace with actual navigation and capture flow
+                    authorizeUser: { _ in
                         "dummy-auth-code"
+                    },
+                    getTokenResponse: { tokenRequest in try await self.exchangeToken(tokenRequest, proxy: false) },
+                    getProofJwt: { credentialIssuer, cNonce, _ in
+                        self.signProofJWT(
+                            accessToken: "nil",
+                            cNonce: cNonce,
+                            issuer: credentialIssuer,
+                            isTrustedIssuer: false
+                        )
                     }
                 )
 
@@ -47,30 +47,12 @@ class VCIClientWrapper {
             do {
                 let client = VCIClient(traceabilityId: "demo-trace-id")
 
-                let issuerMetadata = IssuerMetadata(
-                    credentialAudience: "https://injicertify-mock.released.mosip.net",
-                    credentialEndpoint: "https://injicertify-mock.released.mosip.net/v1/certify/issuance/credential",
-                    credentialType: ["VerifiableCredential", "MockVerifiableCredential"],
-                    credentialFormat: CredentialFormat.ldp_vc,
-                    authorizationServers: ["https://esignet-mock.released.mosip.net"],
-                    tokenEndpoint: "https://api.released.mosip.net/v1/mimoto/get-token/Mock",
-                    scope: "mock_identity_vc_ldp"
-                )
-
                 let credentialResponse = try await client.requestCredentialFromTrustedIssuer(
-                    issuerMetadata: issuerMetadata,
-                    clientMetadata: ClientMetaData(clientId: "mpartner-default-mimoto-mock-oidc", redirectUri: "io.mosip.residentapp.inji://oauthredirect"),
-                    getProofJwt: { accessToken, cNonce, issuerMetadata, configId in
-                        self.signProofJWT(
-                            accessToken: accessToken,
-                            cNonce: cNonce,
-                            issuer:"https://injicertify-mock.released.mosip.net",
-                            credentialConfigurationId: configId,
-                            isTrustedIssuer: true
-                        )
-                    },
-                    getAuthCode: { authEndpoint in
-                        return await withCheckedContinuation { continuation in
+                    credentialIssuer: "https://injicertify-mock.qa-inji1.mosip.net",
+                    credentialConfigurationId: "MockVerifiableCredential",
+                    clientMetadata: ClientMetadata(clientId: "mpartner-default-mimoto-mock-oidc", redirectUri: "io.mosip.residentapp.inji://oauthredirect"),
+                    authorizeUser: { authEndpoint in
+                        await withCheckedContinuation { continuation in
                             DispatchQueue.main.async {
                                 NotificationCenter.default.post(name: Notification.Name("ShowAuthWebView"), object: authEndpoint)
                             }
@@ -86,8 +68,16 @@ class VCIClientWrapper {
                                 }
                             }
                         }
-                    }
-                )
+                    },
+                    getTokenResponse: { tokenRequest in try await self.exchangeToken(tokenRequest, proxy: true) },
+                    getProofJwt: { credentialIssuer, cNonce, _ in
+                        self.signProofJWT(
+                            accessToken: "nil",
+                            cNonce: cNonce,
+                            issuer: credentialIssuer,
+                            isTrustedIssuer: true
+                        )
+                    })
 
                 if let vc = try credentialResponse?.toJsonString() {
                     onResult("✅ Credential Issued:\n\(vc)")
@@ -95,12 +85,31 @@ class VCIClientWrapper {
                     onResult("Downloading VC")
                 }
             } catch {
-               
+            }
+        }
+    }
+    
+    func fetchCredentialTypes(
+        from credentialIssuer: String,
+        onResult: @escaping (_ rawJson: String, _ keys: [String]) -> Void
+    ) {
+        Task {
+            do {
+                let client = VCIClient(traceabilityId: "demo-trace-id")
+                let types = try await client.getCredentialConfigurationsSupported(credentialIssuer: credentialIssuer)
+
+                let rawJson = try types.toJsonString()
+                let keys = Array(types.keys)
+
+                onResult(rawJson, keys)
+            } catch {
+                onResult("❌ Error: \(error.localizedDescription)", [])
             }
         }
     }
 
-    private func signProofJWT(accessToken: String, cNonce: String?, issuer: String, credentialConfigurationId: String?, isTrustedIssuer: Bool?) -> String {
+
+    private func signProofJWT(accessToken: String, cNonce: String?, issuer: String, isTrustedIssuer: Bool?) -> String {
         guard let keyPair = sodium.sign.keyPair() else {
             fatalError("❌ Failed to generate Ed25519 key pair")
         }
@@ -121,23 +130,23 @@ class VCIClientWrapper {
         ]
 
         var nonceToUse = cNonce ?? ""
-            if nonceToUse.isEmpty {
-                let parts = accessToken.split(separator: ".")
-                if parts.count >= 2,
-                   let payloadData = Data(base64Encoded: String(parts[1])),
-                   let payloadJson = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
-                   let fallbackNonce = payloadJson["c_nonce"] as? String {
-                    nonceToUse = fallbackNonce
-                }
+        if nonceToUse.isEmpty {
+            let parts = accessToken.split(separator: ".")
+            if parts.count >= 2,
+               let payloadData = Data(base64Encoded: String(parts[1])),
+               let payloadJson = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
+               let fallbackNonce = payloadJson["c_nonce"] as? String {
+                nonceToUse = fallbackNonce
             }
-            let now = Int(Date().timeIntervalSince1970)
+        }
+        let now = Int(Date().timeIntervalSince1970)
 
-            let payload: [String: Any] = [
-                "aud": issuer,
-                "nonce": nonceToUse,
-                "iat": now,
-                "exp": now + 18000
-            ]
+        let payload: [String: Any] = [
+            "aud": issuer,
+            "nonce": nonceToUse,
+            "iat": now,
+            "exp": now + 18000,
+        ]
 
         let headerData = try! JSONSerialization.data(withJSONObject: header)
         let payloadData = try! JSONSerialization.data(withJSONObject: payload)
@@ -155,6 +164,46 @@ class VCIClientWrapper {
         let signatureBase64 = Data(signature).base64URLEncodedString()
         return "\(signingInput).\(signatureBase64)"
     }
+
+    private func exchangeToken(_ req: TokenRequest, proxy: Bool) async throws -> TokenResponse {
+        // Build form-url-encoded body
+        var items: [URLQueryItem] = [
+            URLQueryItem(name: "grant_type", value: req.grantType.rawValue),
+        ]
+        if let code = req.authCode { items.append(URLQueryItem(name: "code", value: code)) }
+        if let codeVerifier = req.codeVerifier { items.append(URLQueryItem(name: "code_verifier", value: codeVerifier)) }
+        if let pac = req.preAuthCode { items.append(URLQueryItem(name: "pre-authorized_code", value: pac)) }
+        if let tx = req.txCode { items.append(URLQueryItem(name: "tx_code", value: tx)) }
+        if let clientId = req.clientId { items.append(URLQueryItem(name: "client_id", value: clientId)) }
+        if let redirectUri = req.redirectUri { items.append(URLQueryItem(name: "redirect_uri", value: redirectUri)) }
+        let encodedBody = formURLEncode(items: items)
+        guard let url = URL(string: proxy ? "https://api.qa-inji1.mosip.net/v1/mimoto/get-token/Mock" : req.tokenEndpoint) else {
+            throw NSError(domain: "VCIClientWrapper", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid token endpoint"])
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = formURLEncode(items: items).data(using: .utf8)
+
+        let (data, resp) = try await URLSession.shared.data(for: request)
+        guard let http = resp as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode) else {
+            let txt = String(data: data, encoding: .utf8) ?? "<no body>"
+            throw NSError(domain: "VCIClientWrapper",
+                          code: (resp as? HTTPURLResponse)?.statusCode ?? -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Token error: \(txt)"])
+        }
+        let decoder = JSONDecoder()
+        return try decoder.decode(TokenResponse.self, from: data)
+    }
+
+    private func formURLEncode(items: [URLQueryItem]) -> String {
+        items.map { qi in
+            let k = qi.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? qi.name
+            let v = (qi.value ?? "").addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            return "\(k)=\(v)"
+        }.joined(separator: "&")
+    }
 }
 
 extension Data {
@@ -168,4 +217,12 @@ extension Data {
 
 extension Array where Element == UInt8 {
     var data: Data { return Data(self) }
+}
+
+extension Dictionary where Key == String, Value == Any {
+    func toJsonString(pretty: Bool = true) throws -> String {
+        let options: JSONSerialization.WritingOptions = pretty ? .prettyPrinted : []
+        let data = try JSONSerialization.data(withJSONObject: self, options: options)
+        return String(data: data, encoding: .utf8) ?? "{}"
+    }
 }

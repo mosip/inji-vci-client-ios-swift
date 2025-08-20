@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var showScanner: Bool = false
     @State private var flowType: FlowType?
     @State private var authSheetItem: AuthSheetItem? = nil
+    @State private var credentialKeys: [String] = []
 
     var body: some View {
         VStack(spacing: 24) {
@@ -28,12 +29,30 @@ struct ContentView: View {
 
             VStack(spacing: 16) {
                 Button("Start Credential Offer Flow") {
+                    clearResults()
                     flowType = .credentialOffer
                     showScanner = true
                 }
                 .buttonStyle(FilledButtonStyle(color: .blue))
+                Button("Fetch Credential Types") {
+                    clearResults()
+                    isLoading = true
+                    resultText = ""
+                    credentialKeys = []
+
+                    VCIClientWrapper.shared.fetchCredentialTypes(from: "https://injicertify-mock.qa-inji1.mosip.net") { rawJson, keys in
+                        DispatchQueue.main.async {
+                            isLoading = false
+                            resultText = rawJson
+                            credentialKeys = keys
+                        }
+                    }
+                }
+                .buttonStyle(FilledButtonStyle(color: .purple))
+
 
                 Button("Start Trusted Issuer Flow") {
+                    clearResults()
                     flowType = .trustedIssuer
                     isLoading = true
                     resultText = ""
@@ -60,6 +79,7 @@ struct ContentView: View {
 
             if !resultText.isEmpty {
                 ScrollView {
+                    Text("Raw Json")
                     Text(resultText)
                         .padding()
                         .background(Color.gray.opacity(0.1))
@@ -67,6 +87,24 @@ struct ContentView: View {
                 }
                 .frame(height: 300)
             }
+            if !credentialKeys.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("🔑 Credential Configuration IDs:")
+                        .font(.headline)
+                        .padding(.top, 8)
+
+                    ForEach(credentialKeys, id: \.self) { key in
+                        Text("• \(key)")
+                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                            .padding(.leading, 10)
+                            .foregroundColor(.purple)
+                    }
+                }
+                .padding()
+                .background(Color.purple.opacity(0.05))
+                .cornerRadius(10)
+            }
+
         }
         .padding()
         .fullScreenCover(isPresented: $showScanner) {
@@ -88,6 +126,11 @@ struct ContentView: View {
             authSheetItem = nil
         }
     }
+    private func clearResults() {
+        resultText = ""
+        credentialKeys = []
+    }
+
 }
 
 struct FilledButtonStyle: ButtonStyle {
