@@ -68,13 +68,17 @@ final class IssuerMetadataServiceTests: XCTestCase {
     func test_fetch_emptyResponse_shouldThrow() async {
         let service = makeService(response: "")
 
-        do {
-            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "vc1")
-            XCTFail("Expected error for empty response")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("response is empty"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "response is empty"
+        ) {
+            try await service.fetchIssuerMetadataResult(
+                credentialIssuer: "https://issuer.com",
+                credentialConfigurationId: "vc1"
+            )
         }
     }
+
 
 
     func test_fetch_missingCredentialConfiguration_shouldThrow() async {
@@ -86,13 +90,17 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "vc1")
-            XCTFail("Expected error for missing credential configuration")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("credential configuration"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "credential configuration"
+        ) {
+            try await service.fetchIssuerMetadataResult(
+                credentialIssuer: "https://issuer.com",
+                credentialConfigurationId: "vc1"
+            )
         }
     }
+
 
     func test_fetch_missingFormat_shouldThrow() async {
         let json = """
@@ -108,13 +116,17 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "vc1")
-            XCTFail("Expected error for missing format")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("credential format"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "credential format"
+        ) {
+            try await service.fetchIssuerMetadataResult(
+                credentialIssuer: "https://issuer.com",
+                credentialConfigurationId: "vc1"
+            )
         }
     }
+
 
     func test_fetch_missingDoctypeInMdoc_shouldThrow() async {
         let json = """
@@ -130,11 +142,14 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "mdoc")
-            XCTFail("Expected error for missing doctype")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("Missing doctype"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "Missing doctype"
+        ) {
+            try await service.fetchIssuerMetadataResult(
+                credentialIssuer: "https://issuer.com",
+                credentialConfigurationId: "mdoc"
+            )
         }
     }
 
@@ -152,25 +167,31 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "conf1")
-            XCTFail("Expected error for unsupported credential format")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("credential format"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "credential format"
+        ) {
+            try await service.fetchIssuerMetadataResult(
+                credentialIssuer: "https://issuer.com",
+                credentialConfigurationId: "conf1"
+            )
         }
     }
 
     func test_fetch_networkFailure_shouldThrow() async {
         let service = makeService(response: "{}", shouldThrow: true)
 
-        do {
-            _ = try await service.fetchIssuerMetadataResult(credentialIssuer: "https://issuer.com", credentialConfigurationId: "vc1")
-            XCTFail("Expected error for network failure")
-        } catch {
-            print("--------",error.localizedDescription)
-            XCTAssertTrue(error.localizedDescription.contains("Simulated network failure"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: DownloadFailedException.self,
+            messageContains: "Simulated network failure"
+        ) {
+            try await service.fetchIssuerMetadataResult(
+                credentialIssuer: "https://issuer.com",
+                credentialConfigurationId: "vc1"
+            )
         }
     }
+
     
     func testFetch_shouldReturnSdJwtMetadata_whenValidJsonIsProvided() async throws {
         let json = """
@@ -251,16 +272,17 @@ final class IssuerMetadataServiceTests: XCTestCase {
 
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchIssuerMetadataResult(
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "Missing vct"
+        ) {
+            try await service.fetchIssuerMetadataResult(
                 credentialIssuer: "https://issuer.com",
                 credentialConfigurationId: "vc_sd"
             )
-            XCTFail("Expected IssuerMetadataFetchException due to missing vct")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("Missing vct"), "Unexpected error: \(error.localizedDescription)")
         }
     }
+
     
     func testFetch_shouldReturnDcSdJwtMetadata_whenValidJsonIsProvided() async throws {
         let json = """
@@ -336,16 +358,17 @@ final class IssuerMetadataServiceTests: XCTestCase {
 
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchIssuerMetadataResult(
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "Missing vct"
+        ) {
+            try await service.fetchIssuerMetadataResult(
                 credentialIssuer: "https://issuer.com",
                 credentialConfigurationId: "dc_sd"
             )
-            XCTFail("Expected IssuerMetadataFetchException due to missing vct")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("Missing vct"), "Unexpected error: \(error.localizedDescription)")
         }
     }
+
     
     func test_fetchCredentialConfigurationsSupported_success() async throws {
         let json = """
@@ -377,11 +400,11 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
-            XCTFail("Expected error for missing credential_configurations_supported")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("credential_configurations_supported"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "credential_configurations_supported"
+        ) {
+            try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
         }
     }
 
@@ -393,11 +416,11 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
-            XCTFail("Expected error for empty credential_configurations_supported")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("empty"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "empty"
+        ) {
+            try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
         }
     }
 
@@ -411,11 +434,11 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
-            XCTFail("Expected error for invalid configuration format")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("Invalid configuration format"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "Invalid configuration format"
+        ) {
+            try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
         }
     }
 
@@ -431,11 +454,12 @@ final class IssuerMetadataServiceTests: XCTestCase {
         """
         let service = makeService(response: json)
 
-        do {
-            _ = try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
-            XCTFail("Expected error for missing format")
-        } catch {
-            XCTAssertTrue(error.localizedDescription.contains("Missing 'format'"))
+        await assertThrowsVCIErrorContainingMessage(
+            expectedType: IssuerMetadataFetchException.self,
+            messageContains: "Missing 'format'"
+        ) {
+            try await service.fetchCredentialConfigurationsSupported(from: "https://issuer.com")
         }
     }
+
 }

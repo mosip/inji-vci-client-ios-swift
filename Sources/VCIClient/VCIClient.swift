@@ -8,7 +8,6 @@ public class VCIClient {
     let issuerMetadataService: IssuerMetadataService
     let credentialRequestFactory: CredentialRequestFactoryProtocol
 
-
     public init(traceabilityId: String
     ) {
         self.traceabilityId = traceabilityId
@@ -28,7 +27,7 @@ public class VCIClient {
     ) {
         self.traceabilityId = traceabilityId ?? ""
         self.networkSession = networkSession ?? NetworkManager.shared
-        self.credentialOfferFlowHandler = credentialOfferHandler ?? CredentialOfferFlowHandler()
+        credentialOfferFlowHandler = credentialOfferHandler ?? CredentialOfferFlowHandler()
         self.trustedIssuerFlowHandler = trustedIssuerFlowHandler ?? TrustedIssuerFlowHandler()
         self.issuerMetadataService = issuerMetadataService ?? IssuerMetadataService()
         self.credentialRequestFactory = credentialRequestFactory ?? CredentialRequestFactory()
@@ -68,11 +67,29 @@ public class VCIClient {
     }
 
     public func getIssuerMetadata(credentialIssuer: String) async throws -> [String: Any] {
-        return try await issuerMetadataService.fetchAndParseIssuerMetadata(from: credentialIssuer)
+        do {
+            return try await issuerMetadataService.fetchAndParseIssuerMetadata(from: credentialIssuer)
+        } catch let e as VCIClientException {
+            throw e
+        } catch {
+            throw VCIClientException(
+                code: "VCI-010",
+                message: "Unknown exception occurred"
+            )
+        }
     }
-    
-    public func getCredentialConfigurationsSupported(credentialIssuer: String) async throws -> [String:Any]{
-        return try await issuerMetadataService.fetchCredentialConfigurationsSupported(from: credentialIssuer)
+
+    public func getCredentialConfigurationsSupported(credentialIssuer: String) async throws -> [String: Any] {
+        do {
+            return try await issuerMetadataService.fetchCredentialConfigurationsSupported(from: credentialIssuer)
+        } catch let e as VCIClientException {
+            throw e
+        } catch {
+            throw VCIClientException(
+                code: "VCI-010",
+                message: "Unknown exception occurred"
+            )
+        }
     }
 
     public func requestCredentialFromTrustedIssuer(
@@ -85,7 +102,6 @@ public class VCIClient {
         downloadTimeoutInMillis: Int64 = Constants.defaultNetworkTimeoutInMillis
     ) async throws -> CredentialResponse? {
         do {
-
             return try await trustedIssuerFlowHandler.downloadCredentials(
                 credentialIssuer: credentialIssuer,
                 credentialConfigurationId: credentialConfigurationId,

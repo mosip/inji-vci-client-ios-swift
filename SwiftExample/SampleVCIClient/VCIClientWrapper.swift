@@ -7,7 +7,7 @@ class VCIClientWrapper {
     private let sodium = Sodium()
 
     private init() {}
-
+    
     func startCredentialOfferFlow(from scanned: String, onResult: @escaping (String) -> Void) {
         Task {
             do {
@@ -23,7 +23,6 @@ class VCIClientWrapper {
                     getTokenResponse: { tokenRequest in try await self.exchangeToken(tokenRequest, proxy: false) },
                     getProofJwt: { credentialIssuer, cNonce, _ in
                         self.signProofJWT(
-                            accessToken: "nil",
                             cNonce: cNonce,
                             issuer: credentialIssuer,
                             isTrustedIssuer: false
@@ -48,9 +47,9 @@ class VCIClientWrapper {
                 let client = VCIClient(traceabilityId: "demo-trace-id")
 
                 let credentialResponse = try await client.requestCredentialFromTrustedIssuer(
-                    credentialIssuer: "https://injicertify-mock.qa-inji1.mosip.net",
-                    credentialConfigurationId: "MockVerifiableCredential",
-                    clientMetadata: ClientMetadata(clientId: "mpartner-default-mimoto-mock-oidc", redirectUri: "io.mosip.residentapp.inji://oauthredirect"),
+                    credentialIssuer: credentialIssuer ,
+                    credentialConfigurationId: credentialConfigurationId,
+                    clientMetadata: ClientMetadata(clientId: clientId, redirectUri: redirectUri),
                     authorizeUser: { authEndpoint in
                         await withCheckedContinuation { continuation in
                             DispatchQueue.main.async {
@@ -72,7 +71,6 @@ class VCIClientWrapper {
                     getTokenResponse: { tokenRequest in try await self.exchangeToken(tokenRequest, proxy: true) },
                     getProofJwt: { credentialIssuer, cNonce, _ in
                         self.signProofJWT(
-                            accessToken: "nil",
                             cNonce: cNonce,
                             issuer: credentialIssuer,
                             isTrustedIssuer: true
@@ -109,7 +107,7 @@ class VCIClientWrapper {
     }
 
 
-    private func signProofJWT(accessToken: String, cNonce: String?, issuer: String, isTrustedIssuer: Bool?) -> String {
+    private func signProofJWT(cNonce: String?, issuer: String, isTrustedIssuer: Bool?) -> String {
         guard let keyPair = sodium.sign.keyPair() else {
             fatalError("❌ Failed to generate Ed25519 key pair")
         }
@@ -129,16 +127,7 @@ class VCIClientWrapper {
             "kid": kid,
         ]
 
-        var nonceToUse = cNonce ?? ""
-        if nonceToUse.isEmpty {
-            let parts = accessToken.split(separator: ".")
-            if parts.count >= 2,
-               let payloadData = Data(base64Encoded: String(parts[1])),
-               let payloadJson = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
-               let fallbackNonce = payloadJson["c_nonce"] as? String {
-                nonceToUse = fallbackNonce
-            }
-        }
+        var nonceToUse = cNonce
         let now = Int(Date().timeIntervalSince1970)
 
         let payload: [String: Any] = [
@@ -177,7 +166,7 @@ class VCIClientWrapper {
         if let clientId = req.clientId { items.append(URLQueryItem(name: "client_id", value: clientId)) }
         if let redirectUri = req.redirectUri { items.append(URLQueryItem(name: "redirect_uri", value: redirectUri)) }
         let encodedBody = formURLEncode(items: items)
-        guard let url = URL(string: proxy ? "https://api.qa-inji1.mosip.net/v1/mimoto/get-token/Mock" : req.tokenEndpoint) else {
+        guard let url = URL(string: proxy ? proxyTokenEndpoint : req.tokenEndpoint) else {
             throw NSError(domain: "VCIClientWrapper", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid token endpoint"])
         }
 

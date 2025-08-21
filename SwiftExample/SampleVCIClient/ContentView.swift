@@ -40,7 +40,7 @@ struct ContentView: View {
                     resultText = ""
                     credentialKeys = []
 
-                    VCIClientWrapper.shared.fetchCredentialTypes(from: "https://injicertify-mock.qa-inji1.mosip.net") { rawJson, keys in
+                    VCIClientWrapper.shared.fetchCredentialTypes(from: credentialIssuer) { rawJson, keys in
                         DispatchQueue.main.async {
                             isLoading = false
                             resultText = rawJson
