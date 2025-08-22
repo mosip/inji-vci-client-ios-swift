@@ -603,9 +603,9 @@
 		};
 		9CDEF6762E01599C00FA280B /* XCRemoteSwiftPackageReference "inji-vci-client-ios-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/tw-mosip/inji-vci-client-ios-swift/";
+			repositoryURL = "https://github.com/mosip/inji-vci-client-ios-swift/";
 			requirement = {
-				branch = "injimob-3456";
+				branch = develop;
 				kind = branch;
 			};
 		};
