@@ -321,6 +321,8 @@ final class MockCredentialOfferService: CredentialOfferService {
 final class MockIssuerMetadataService: IssuerMetadataService {
     var resultToReturn: IssuerMetadataResult!
     var shouldThrow: Bool = false
+    var configurationsToReturn: [String: Any]?
+  
     override func fetchIssuerMetadataResult(
         credentialIssuer: String,
         credentialConfigurationId: String
@@ -335,6 +337,13 @@ final class MockIssuerMetadataService: IssuerMetadataService {
 
         return resultToReturn.raw as [String: Any]
     }
+    
+    override func fetchCredentialConfigurationsSupported(from credentialIssuer: String) async throws -> [String: Any] {
+            if shouldThrow {
+                throw IssuerMetadataFetchException("Simulated failure")
+            }
+            return configurationsToReturn ?? [:]
+        }
 }
 
 final class MockPreAuthFlowService: PreAuthCodeFlowService {
