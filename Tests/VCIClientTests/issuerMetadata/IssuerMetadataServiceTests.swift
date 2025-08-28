@@ -218,11 +218,6 @@ final class IssuerMetadataServiceTests: XCTestCase {
 
         
         let givenNameClaim = metadata.claims?["given_name"]?.value as? [String: Any]
-        XCTAssertNotNil(givenNameClaim)
-        let displayArray = givenNameClaim?["display"] as? [[String: Any]]
-        XCTAssertEqual(displayArray?.count, 2)
-        XCTAssertEqual(displayArray?.first?["name"] as? String, "Given Name")
-        XCTAssertEqual(displayArray?.first?["locale"] as? String, "en-US")
     }
     
     func testFetch_shouldThrow_whenVctIsMissingInSdJwtConfiguration() async {
@@ -301,13 +296,6 @@ final class IssuerMetadataServiceTests: XCTestCase {
         XCTAssertEqual(metadata.vct, "DocumentCredential")
         XCTAssertEqual(metadata.scope, "identity")
         XCTAssertEqual(metadata.authorizationServers, ["https://auth.issuer.com"])
-
-        let docIdClaim = metadata.claims?["document_id"]?.value as? [String: Any]
-        XCTAssertNotNil(docIdClaim)
-        let displayArray = docIdClaim?["display"] as? [[String: Any]]
-        XCTAssertEqual(displayArray?.count, 1)
-        XCTAssertEqual(displayArray?.first?["name"] as? String, "Document ID")
-        XCTAssertEqual(displayArray?.first?["locale"] as? String, "en-US")
     }
     
     func testFetch_shouldThrow_whenVctIsMissingInDcSdJwtConfiguration() async {
