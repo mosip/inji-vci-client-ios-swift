@@ -13,7 +13,7 @@ final class SdJwtCredentialRequestTests: XCTestCase {
             credentialIssuer: "https://issuer.example.com",
             credentialEndpoint: "https://issuer.example.com/credential",
             credentialFormat: .vc_sd_jwt,
-            claims: ["given_name": AnyCodable("Alice")], vct: "IdentityCredential"
+            vct: "IdentityCredential"
         )
         credentialRequest = SdJwtCredentialRequest(accessToken: accessToken, issuerMetaData: issuer, proof: proofJWT)
     }
@@ -37,8 +37,6 @@ final class SdJwtCredentialRequestTests: XCTestCase {
                let bodyString = String(data: bodyData, encoding: .utf8) {
                 XCTAssertTrue(bodyString.contains("\"vct\":\"IdentityCredential\""))
                 XCTAssertTrue(bodyString.contains("\"jwt\":\"xxxx.yyyy.zzzz\""))
-                XCTAssertTrue(bodyString.contains("\"given_name\""))
-                XCTAssertTrue(bodyString.contains("\"Alice\""))
             } else {
                 XCTFail("Request body is nil or not convertible to string")
             }
@@ -92,7 +90,6 @@ final class SdJwtCredentialRequestTests: XCTestCase {
                 credentialIssuer: "https://issuer.com",
                 credentialEndpoint: "https://issuer.com/credential",
                 credentialFormat: format,
-                claims: ["field": AnyCodable("value")],
                 vct: "SomeCredential"
             )
             
@@ -125,7 +122,6 @@ final class SdJwtCredentialRequestTests: XCTestCase {
             XCTAssertEqual(proof?["jwt"] as? String, "xxxx.yyyy.zzzz")
 
             let claims = json?["claims"] as? [String: Any]
-            XCTAssertEqual(claims?["field"] as? String, "value")
             
             let expectedFormatValue = (format == .vc_sd_jwt) ? "vc+sd-jwt" : "dc+sd-jwt"
                         XCTAssertEqual(json?["format"] as? String, expectedFormatValue)
