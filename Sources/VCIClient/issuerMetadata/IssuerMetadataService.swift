@@ -138,13 +138,10 @@ class IssuerMetadataService {
                 throw IssuerMetadataFetchException("Missing vct in sd_jwt_vc configuration")
             }
 
-            let claims = credentialType["claims"] as? [String: Any]
-
             return IssuerMetadata(
                 credentialIssuer: credentialIssuer,
                 credentialEndpoint: credentialEndpoint,
                 credentialFormat: format,
-                claims: claims?.mapValues { AnyCodable($0) },
                 authorizationServers: rawIssuerMetadata["authorization_servers"] as? [String],
                 vct: vct,
                 scope: scope

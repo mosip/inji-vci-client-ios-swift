@@ -43,8 +43,7 @@ class SdJwtCredentialRequest: CredentialRequestProtocol {
         let requestBody = SdJwtVcCredentialRequestBody(
             format: issuer.credentialFormat,
             vct: vct,
-            proof: proofJWT,
-            claims: issuer.claims
+            proof: proofJWT
         )
 
         do {
@@ -59,12 +58,10 @@ struct SdJwtVcCredentialRequestBody: Encodable {
     let format: CredentialFormat
     let vct: String
     let proof: JWTProof
-    let claims: [String: AnyCodable]?
 
-    init(format: CredentialFormat, vct: String, proof: JWTProof, claims: [String: AnyCodable]?) {
+    init(format: CredentialFormat, vct: String, proof: JWTProof) {
         self.format = format
         self.vct = vct
         self.proof = proof
-        self.claims = claims
     }
 }
