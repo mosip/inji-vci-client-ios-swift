@@ -18,6 +18,7 @@ It supports **Issuer Initiated (Credential Offer)** and **Wallet Initiated (Trus
 - Support for multiple Credential formats:
   - `ldp_vc`
   - `mso_mdoc`
+  - `vc+sd-jwt` / `dc+sd-jwt`
 
 > ⚠️ Consumer of this library is responsible for processing and rendering the credential after it is downloaded.
 
@@ -28,7 +29,7 @@ It supports **Issuer Initiated (Credential Offer)** and **Wallet Initiated (Trus
 Add VCIClient to your Swift Package Manager dependencies:
 
 ```swift
-.package(url: "https://github.com/mosip/inji-vci-client-ios", from: "0.4.0")
+.package(url: "https://github.com/mosip/inji-vci-client-ios", from: "0.5.0")
 ```
 
 ## 🏗️ Construction of VCIClient instance
@@ -240,24 +241,43 @@ let credentialIssuer = credentialResponse.credentialIssuer // eg - "https://samp
 
 1. Format: `ldp_vc`
 ```
-val issuerMetadata = IssuerMeta(
+val issuerMetadata = IssuerMetadata(
                         CREDENTIAL_AUDIENCE,
                         CREDENTIAL_ENDPOINT, 
                         DOWNLOAD_TIMEOUT, 
                         CREDENTIAL_TYPE, 
-                        CredentialFormat.LDP_VC )
+                        CredentialFormat.ldp_vc )
 ```
 2. Format: `mso_mdoc`
 ```
-val issuerMetadata = IssuerMeta(
+val issuerMetadata = IssuerMetadata(
                         CREDENTIAL_AUDIENCE,
                         CREDENTIAL_ENDPOINT, 
                         DOWNLOAD_TIMEOUT, 
                         DOC_TYPE,
                         CLAIMS, 
-                        CredentialFormat.MSO_MDOC )
+                        CredentialFormat.mso_mdoc )
 ```
 
+3. Format: `vc+sd-jwt`
+```
+val issuerMetadata = IssuerMetadata(
+                        CREDENTIAL_AUDIENCE,
+                        CREDENTIAL_ENDPOINT,
+                        DOWNLOAD_TIMEOUT,
+                        VCT,
+                        CredentialFormat.vc_sd_jwt )
+```
+
+4. Format: `dc+sd-jwt`
+```
+val issuerMetadata = IssuerMetadata(
+                        CREDENTIAL_AUDIENCE,
+                        CREDENTIAL_ENDPOINT,
+                        DOWNLOAD_TIMEOUT,
+                        VCT,
+                        CredentialFormat.dc_sd_jwt )
+```
 #### Returns
 
 An instance of `CredentialResponse` containing:
@@ -272,7 +292,7 @@ An instance of `CredentialResponse` containing:
 
 ```swift
 val credentialResponse = try await vciClient.requestCredential(
-    issuerMeta = IssuerMeta(
+    issuerMeta = IssuerMetadata(
                         CREDENTIAL_AUDIENCE,
                         CREDENTIAL_ENDPOINT, 
                         DOWNLOAD_TIMEOUT, 
